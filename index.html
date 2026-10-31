@@ -3,111 +3,38 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PrimeMove - Track Parcel</title>
+<title>PrimeMove - Track</title>
 <style>
-body{font-family:Arial;background:#f4f6f8;margin:0;padding:10px}
-.card{background:white;padding:15px;border-radius:12px;margin-bottom:12px;box-shadow:0 2px 6px rgba(0,0,0,0.08)}
-input,button{width:100%;padding:14px;margin:6px 0;border-radius:10px;border:1px solid #ddd;box-sizing:border-box}
-button{background:#111;color:white;font-weight:bold;border:none;font-size:16px}
-.yellow{background:#FFD700;color:#000}
-.blue{background:#0d6efd}
-.order{border-left:5px solid #FFD700;padding:12px;margin-bottom:12px;background:#fffbe6;border-radius:10px}
-.status{padding:6px 12px;border-radius:20px;font-size:12px;font-weight:bold;display:inline-block;margin-top:6px}
-.s-assigned{background:#ffe082}
-.s-picked{background:#ffcc80}
-.s-delivered{background:#a5d6a7}
-.small{font-size:12px;color:#666}
-h2{text-align:center}
-.logo{text-align:center;font-size:28px;margin:10px}
+body{font-family:Inter,Arial,sans-serif;background:#f8fafc;margin:0;padding:0}
+.header{background:#111;color:white;padding:20px;text-align:center}
+.header h1{margin:0;font-size:22px;letter-spacing:0.5px}
+.search{background:white;margin:-20px 15px 15px 15px;padding:16px;border-radius:16px;box-shadow:0 4px 16px rgba(0,0,0,0.1)}
+input{width:100%;padding:14px;border:2px solid #e2e8f0;border-radius:12px;box-sizing:border-box;font-size:15px}
+.btn{width:100%;padding:14px;border:none;border-radius:12px;font-weight:bold;font-size:15px;margin-top:10px;cursor:pointer}
+.btn-black{background:#111;color:white}
+.btn-grey{background:#f1f5f9;color:#475569}
+.card{background:white;margin:12px 15px;padding:18px;border-radius:16px;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
+.badge{padding:6px 14px;border-radius:20px;font-size:11px;font-weight:bold;letter-spacing:0.5px}
+.badge-assigned{background:#fef3c7;color:#92400e}
+.badge-picked{background:#dbeafe;color:#1e40af}
+.badge-delivered{background:#dcfce7;color:#166534}
+.row{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.label{font-size:11px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.8px;font-weight:600}
+.value{font-size:15px;font-weight:600;color:#0f172a;margin-top:4px}
+.driverBox{background:#f8fafc;border:1px solid #e2e8f0;padding:14px;border-radius:14px;display:flex;align-items:center;gap:12px;margin-top:12px}
+.avatar{width:48px;height:48px;background:#FFD700;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;color:#111;font-size:18px}
+.timeline{margin-top:18px;border-left:2px dashed #e2e8f0;padding-left:22px}
+.step{position:relative;margin-bottom:20px}
+.step::before{content:"";position:absolute;left:-29px;top:3px;width:14px;height:14px;border-radius:50%;background:#e2e8f0;border:2px solid white}
+.step.done::before{background:#22c55e}
+.step.active::before{background:#111}
+.callBtn{padding:12px;border-radius:10px;text-decoration:none;display:inline-block;text-align:center;flex:1;font-weight:bold;font-size:13px}
 </style>
 </head>
 <body>
-<div class="logo">🚚 PrimeMove</div>
-<h2>Track Your Parcel</h2>
+<div class="header"><h1>🚚 PrimeMove</h1><div style="font-size:12px;opacity:0.7;margin-top:4px">Premium Delivery • Track Your Parcel</div></div>
 
-<div class="card">
-<input id="trackInput" placeholder="Enter Parcel ID (e.g. PL123456)">
-<button onclick="track()" class="blue">🔍 TRACK PARCEL</button>
-<button onclick="loadAll()" style="background:#666">Show All Parcels On This Phone</button>
-<div id="result" style="margin-top:15px"></div>
-</div>
-
-<div class="card">
-<h3>How to track?</h3>
-<p class="small">Enter your PL code sent by PrimeMove on WhatsApp.<br><br>Example: PL123456<br><br>If you clicked a link from admin, your parcels are saved on THIS phone automatically.</p>
-<div id="infoBox" class="small"></div>
-</div>
-
-<script>
-function getOrders(){
- try{
-  let raw = localStorage.getItem("pm_final") || localStorage.getItem("pm_orders") || "[]";
-  let arr = JSON.parse(raw);
-  if(!Array.isArray(arr)) return [];
-  return arr.map(o=>({
-   id: o.id || o.orderId || "",
-   customerName: o.customerName || o.cName || o.name || "",
-   customerPhone: o.customerPhone || o.cPhone || o.phone || "",
-   deliveryAddress: o.deliveryAddress || o.cAddress || o.address || "",
-   amount: o.amount || o.cAmount || "",
-   deliveryFee: o.deliveryFee || o.cFee || "",
-   driverCode: o.driverCode || o.cDriver || o.driver || "",
-   status: o.status || "Assigned",
-   createdAt: o.createdAt || ""
-  }));
- }catch(e){ return []; }
-}
-function saveOrders(arr){ localStorage.setItem("pm_final", JSON.stringify(arr)); }
-
-// Handle sync link from admin
-(function handleSync(){
- const p = new URLSearchParams(window.location.search);
- const sync = p.get("sync");
- const track = p.get("track");
- if(sync){
-  try{
-   let json = decodeURIComponent(atob(sync));
-   let incoming = JSON.parse(decodeURIComponent(json));
-   if(!Array.isArray(incoming)) incoming=[incoming];
-   let existing = getOrders();
-   let added=0;
-   incoming.forEach(ni=>{
-    let nid = ni.id || ni.orderId;
-    if(!existing.find(e=>e.id===nid)){ existing.unshift(ni); added++; }
-   });
-   saveOrders(existing);
-   document.getElementById("infoBox").innerHTML = "✅ Synced "+incoming.length+" parcels! Saved on this phone. Now enter PL code to track.";
-   if(track){ document.getElementById("trackInput").value=track; setTimeout(()=>trackCode(track), 500); }
-  }catch(e){ console.log(e); }
- }
- if(track && !sync){ document.getElementById("trackInput").value=track; setTimeout(()=>trackCode(track), 500); }
-})();
-
-function track(){ let code = document.getElementById("trackInput").value.trim().toUpperCase(); trackCode(code); }
-function trackCode(code){
- if(!code){ alert("Enter PL code"); return; }
- let orders = getOrders();
- let o = orders.find(x=> x.id.toUpperCase()===code.toUpperCase());
- let box = document.getElementById("result");
- if(!o){
-  box.innerHTML = `<div class="order" style="border-left-color:red;background:#ffebee"><b>❌ Not found: ${code}</b><br><span class="small">This phone has ${orders.length} parcels saved. Make sure you opened the sync link from admin on THIS phone.<br><br>Saved IDs: ${orders.map(x=>x.id).join(", ") || "none"}</span></div>`;
-  return;
- }
- let statusClass = o.status.toLowerCase().includes("deliver") ? "s-delivered" : o.status.toLowerCase().includes("pick") ? "s-picked" : "s-assigned";
- let date = o.createdAt ? new Date(o.createdAt).toLocaleString() : "";
- box.innerHTML = `<div class="order"><b>📦 ${o.id}</b><br><span class="small">Customer: ${o.customerName}<br>Address: ${o.deliveryAddress}<br>Amount: R${o.amount} + R${o.deliveryFee} delivery<br>Driver: ${o.driverCode}<br>Date: ${date}</span><br><span class="status ${statusClass}">${o.status.toUpperCase()}</span><br><br><div style="background:white;padding:10px;border-radius:8px"><b>Tracking Timeline:</b><br>✅ Order Created<br>${o.status!=="Assigned" ? "✅ Picked Up by "+o.driverCode+"<br>" : "⏳ Waiting for Pickup<br>"}${o.status==="Delivered" ? "✅ Delivered!<br>" : "⏳ Out for Delivery"}</div></div>`;
-}
-function loadAll(){
- let orders = getOrders();
- let box = document.getElementById("result");
- if(orders.length==0){ box.innerHTML="No parcels saved on this phone. Open admin sync link first."; return; }
- let html="<h3>All Parcels On This Phone ("+orders.length+")</h3>";
- orders.forEach(o=>{
-  let sc = o.status.toLowerCase().includes("deliver") ? "s-delivered" : o.status.toLowerCase().includes("pick") ? "s-picked" : "s-assigned";
-  html+=`<div class="order"><b>${o.id}</b> - ${o.customerName}<br><span class="small">${o.deliveryAddress} | R${o.amount} | ${o.driverCode}</span><br><span class="status ${sc}">${o.status}</span> <button onclick="document.getElementById('trackInput').value='${o.id}';track()" style="width:auto;padding:5px 10px;margin-left:5px">Track</button></div>`;
- });
- box.innerHTML=html;
-}
-</script>
-</body>
-</html>
+<div class="search">
+<input id="trackInput" placeholder="Enter PL code (e.g. PL262857)">
+<button onclick="track()" class="btn btn-black">TRACK PARCEL</button>
+<button onclick="loadAll()" class="btn btn-grey">Show All
