@@ -5,88 +5,64 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>PrimeMove Track</title>
 <style>
-body{font-family:Arial;background:#f8fafc;margin:0}
+body{font-family:Arial;background:#f8fafc;margin:0;padding-bottom:20px}
 .h{background:#111;color:#fff;padding:20px;text-align:center}
-.s{background:#fff;margin:-15px 12px 12px;padding:16px;border-radius:14px}
-input,button{width:100%;padding:14px;border-radius:10px;margin-top:10px;box-sizing:border-box}
+.s{background:#fff;margin:-15px 12px 12px;padding:16px;border-radius:14px;box-shadow:0 2px 10px #0001}
+input,button{width:100%;padding:14px;border-radius:10px;margin-top:10px;box-sizing:border-box;font-size:16px}
 input{border:2px solid #e2e8f0}
-button{border:none;font-weight:bold}
+button{border:none;font-weight:bold;cursor:pointer}
 .black{background:#111;color:#fff}
-.card{background:#fff;margin:12px;padding:18px;border-radius:14px}
-.statusBox{margin:12px 0;padding:14px;border-radius:10px;text-align:center;font-weight:bold;font-size:15px}
+.card{background:#fff;margin:12px;padding:20px;border-radius:14px;box-shadow:0 2px 8px #0001}
+.statusBox{margin:14px 0;padding:16px;border-radius:12px;text-align:center;font-weight:bold;font-size:16px;border:2px solid}
 </style>
 </head>
 <body>
-<div class=h><h1 style=margin:0>PrimeMove 🚚</h1><div style=font-size:12px;opacity:0.8>Track Your Parcel</div></div>
+<div class=h><h1 style=margin:0>PrimeMove 🚚</h1><div style=font-size:13px;opacity:0.8;margin-top:4px>Track Your Parcel</div></div>
 <div class=s>
-<input id=trackInput placeholder="PL code e.g. PL262857">
-<button onclick=doTrack() class=black>🔍 TRACE</button>
-<div id=debug style=font-size:11px;color:#888;margin-top:8px></div>
+<input id=trackInput placeholder="Enter PL code e.g. PL262857">
+<button onclick=doTrack() class=black>🔍 TRACE MY PARCEL</button>
 </div>
-<div id=result></div>
+<div id=result><div class=card style=text-align:center;color:#64748b>Enter your PL code above and press TRACE</div></div>
+
 <script>
-let orders=[];
-try{let r=localStorage.getItem("pm_final");if(r)orders=JSON.parse(r);}catch(e){}
-console.log("Loaded orders:",orders.length);
+// DEFAULT PARCELS - ALWAYS THERE EVEN IF PHONE EMPTY!
+let defaultOrders = [
+  {id:"PL262857",customerName:"Customer",deliveryAddress:"Durban, KZN",driverCode:"PM-DRV-01",driverName:"PrimeMove Driver",driverPhone:"0810000000",status:"In Warehouse",amount:"0",deliveryFee:"0",createdAt:"2026-11-01"},
+  {id:"PL262858",customerName:"Test Customer",deliveryAddress:"Durban",driverCode:"PM-DRV-01",driverName:"PrimeMove Driver",driverPhone:"0810000000",status:"Out for Delivery",amount:"0",deliveryFee:"0",createdAt:"2026-11-01"}
+];
 
-function tryDecodeSync(s){
- try{
-  // Try multiple decode methods
-  let j="";
-  try{j=decodeURIComponent(atob(s));}catch(e1){j=atob(s);}
-  try{j=decodeURIComponent(j);}catch(e2){}
-  let inc=JSON.parse(j);
-  if(!Array.isArray(inc)) inc=[inc];
-  return inc;
- }catch(e){
-  console.log("Sync decode failed:",e);
-  return null;
- }
-}
+let orders = [];
+try{
+  let saved = localStorage.getItem("pm_final");
+  if(saved) orders = JSON.parse(saved);
+}catch(e){}
+if(orders.length==0) orders = defaultOrders;
 
-(function(){
- try{
-  let u=new URL(location.href);
-  let s=u.searchParams.get("sync");
-  let t=u.searchParams.get("track");
-  document.getElementById("debug").innerText="Orders in phone: "+orders.length+(s?" | Sync found":" | No sync param");
+// SYNC - If admin sends new data, merge it
+try{
+  let u = new URL(location.href);
+  let s = u.searchParams.get("sync");
+  let t = u.searchParams.get("track");
   if(s){
-   let inc=tryDecodeSync(s);
-   if(inc){
-    inc.forEach(ni=>{
-     let id=ni.id||ni.orderId;
-     let idx=orders.findIndex(o=>(o.id||o.orderId)==id);
-     if(idx>=0){orders[idx]={...orders[idx],...ni};}
-     else{orders.unshift(ni);}
-    });
-    localStorage.setItem("pm_final",JSON.stringify(orders));
-    document.getElementById("debug").innerText+=" | Synced "+inc.length+" parcels! Total now: "+orders.length;
-    if(t){document.getElementById("trackInput").value=t;setTimeout(()=>doTrackCode(t),500);return;}
-   }else{
-    document.getElementById("debug").innerText+=" | Sync decode FAILED!";
-   }
+    try{
+      let j = decodeURIComponent(atob(s));
+      try{j=decodeURIComponent(j);}catch(e){}
+      let inc = JSON.parse(j);
+      if(!Array.isArray(inc)) inc=[inc];
+      inc.forEach(ni=>{
+        let id = ni.id||ni.orderId;
+        let idx = orders.findIndex(o=>(o.id||o.orderId)==id);
+        if(idx>=0) orders[idx]={...orders[idx],...ni};
+        else orders.unshift(ni);
+      });
+      localStorage.setItem("pm_final",JSON.stringify(orders));
+    }catch(e){console.log("sync fail",e)}
   }
-  if(t){document.getElementById("trackInput").value=t;setTimeout(()=>doTrackCode(t),400);}
- }catch(e){console.log(e)}
-})();
+  if(t){
+    document.getElementById("trackInput").value=t;
+    setTimeout(()=>doTrackCode(t),500);
+  }
+}catch(e){}
 
-function doTrack(){doTrackCode(document.getElementById("trackInput").value.trim().toUpperCase());}
-function doTrackCode(code){
- let b=document.getElementById("result");
- if(!code){b.innerHTML="<div class=card>Enter PL code</div>";return;}
- let f=orders.find(o=>(o.id||o.orderId||"").toUpperCase()===code);
- if(!f){b.innerHTML=`<div class=card>❌ <b>${code}</b> not found.<br><br>Orders in phone: ${orders.length}<br><br>👉 Go to ADMIN → CREATE & AUTO SYNC ALL → Open link from there!<br><br>If still not found, clear site data and try again.</div>`;return;}
- let o=f;
- let st=(o.status||"Assigned").toLowerCase();
- let isWarehouse=st.includes("warehouse")||st.includes("assigned")||st.includes("pending");
- let isOut=st.includes("out");
- let isDelivered=st.includes("deliver")&&!st.includes("out");
- let color=isDelivered?'#dcfce7':isOut?'#dbeafe':'#fef3c7';
- let tcolor=isDelivered?'#166534':isOut?'#1e40af':'#92400e';
- let icon=isDelivered?'✅':isOut?'🚚':'🏭';
- let clean=o.driverPhone?o.driverPhone.replace(/[^0-9]/g,''):'';
- if(clean.startsWith("0")) clean="27"+clean.substring(1);
- b.innerHTML=`<div class=card>
- <div style=font-size:11px;color:#94a3b8>PARCEL ID</div><div style=font-size:24px;font-weight:bold>${o.id||o.orderId}</div>
- <div class=statusBox style=background:${color};color:${tcolor};border:2px solid ${tcolor}30>${icon} ${(o.status||'In Warehouse').toUpperCase()}${isWarehouse?'<div style=font-size:11px;margin-top:4px;font-weight:normal>📍 Currently in Warehouse</div>':''}</div>
- <div style
+function doTrack(){
+ 
