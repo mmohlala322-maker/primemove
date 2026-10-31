@@ -1,0 +1,53 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>PRIME MOVE DRIVER</title><style>
+body{font-family:Arial;background:#111;color:#fff;padding:15px;margin:0}
+.card{background:#1e1e1e;max-width:500px;margin:15px auto;padding:18px;border-radius:14px;border:1px solid #333}
+input,select,button{width:100%;padding:14px;margin:6px 0;border-radius:10px;border:1px solid #444;background:#2a2a2a;color:#fff;box-sizing:border-box}
+button{background:#25D366;color:#000;font-weight:bold;font-size:18px}
+label{font-size:11px;color:#25D366;font-weight:bold;margin-top:10px;display:block}
+</style></head><body>
+<h2 style="text-align:center;color:#25D366">🚚 PRIME MOVE DRIVER APP</h2>
+
+<div class="card" id="loginCard">
+<h3 style="color:#ffcc00;text-align:center">🔑 DRIVER LOGIN</h3>
+<label>YOUR LOGIN CODE (From Admin)</label>
+<input id="loginCode" placeholder="e.g. PM1001">
+<button onclick="login()">LOGIN</button>
+</div>
+
+<div class="card" id="jobCard" style="display:none">
+<h3 style="color:#ffcc00">Welcome <span id="dName"></span> ✅</h3>
+<p>Code: <span id="dCode" style="background:#ffcc00;color:#000;padding:3px 8px;border-radius:10px"></span></p>
+<label>PL CODE *</label><input id="pl" placeholder="PL...">
+<label>YOUR CURRENT LOCATION *</label><input id="dloc" placeholder="e.g. Umhlanga Main Road">
+<label>STATUS *</label><select id="dstatus"><option>Picked at Warehouse</option><option>On The Way</option><option>5 Mins Away</option><option>Arrived</option><option>Delivered</option></select>
+<label>ETA</label><input id="eta" placeholder="e.g. 15 mins">
+<button onclick="updateLive()">🚀 UPDATE CUSTOMER LIVE</button>
+<div id="msg" style="display:none;background:#d4edda;color:#000;padding:10px;border-radius:8px;margin-top:10px;text-align:center">✅ Customer updated!</div>
+<button style="background:#444;color:#fff" onclick="logout()">LOGOUT</button>
+</div>
+
+<script>
+let cur=null;
+function login(){
+ let code=document.getElementById('loginCode').value.trim().toUpperCase();
+ if(!code){alert('Enter code');return}
+ let drivers=JSON.parse(localStorage.getItem('prime_drivers')||'[]');
+ let found=drivers.find(d=>d.code.toUpperCase()===code);
+ if(!found && drivers.length===0){found={name:'Driver '+code,phone:'',code:code}}
+ if(!found){alert('Invalid code. Valid: '+drivers.map(d=>d.code).join(', '));return}
+ cur=found;document.getElementById('loginCard').style.display='none';document.getElementById('jobCard').style.display='block';
+ document.getElementById('dName').innerText=cur.name;document.getElementById('dCode').innerText=cur.code;
+ let p=new URLSearchParams(location.search);if(p.get('track'))document.getElementById('pl').value=p.get('track');
+}
+function updateLive(){
+ let pl=document.getElementById('pl').value.trim().toUpperCase();
+ let loc=document.getElementById('dloc').value.trim();
+ let st=document.getElementById('dstatus').value;
+ let eta=document.getElementById('eta').value.trim();
+ if(!pl||!loc){alert('Fill PL and location');return}
+ localStorage.setItem('driver_'+pl,JSON.stringify({loc,st,eta,driver:cur.name,time:Date.now()}));
+ document.getElementById('msg').style.display='block';setTimeout(()=>document.getElementById('msg').style.display='none',3000);
+}
+function logout(){cur=null;document.getElementById('jobCard').style.display='none';document.getElementById('loginCard').style.display='block';}
+let params=new URLSearchParams(location.search);if(params.get('dc')){document.getElementById('loginCode').value=params.get('dc');setTimeout(login,500)}
+</script></body></html>

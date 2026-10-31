@@ -1,0 +1,60 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>PRIME MOVE TRACKING</title><style>
+body{font-family:Arial;background:#f0f2f5;margin:0;padding:15px}
+.header{background:#000;color:#ffcc00;padding:18px;text-align:center;border-radius:14px 14px 0 0;max-width:500px;margin:20px auto 0}
+.card{background:#fff;padding:22px;border-radius:0 0 14px 14px;max-width:500px;margin:0 auto;box-shadow:0 4px 12px rgba(0,0,0,.1)}
+.status{padding:16px;border-radius:10px;font-weight:bold;text-align:center;margin:15px 0;font-size:20px}
+.WAREHOUSE{background:#fff3cd;border:2px solid #ffc107}.OUT-FOR-DELIVERY{background:#cce5ff;border:2px solid #007bff}.DELIVERED{background:#d4edda;border:2px solid #28a745}.FAILED{background:#f8d7da;border:2px solid #dc3545}
+.row{display:flex;justify-content:space-between;background:#f8f9fa;padding:12px;border-radius:8px;margin:8px 0}
+.driver-box{background:#000;color:#fff;padding:15px;border-radius:12px;margin-top:15px}
+.live-box{background:#e8f5e9;border:2px solid #25D366;padding:15px;border-radius:12px;margin-top:15px}
+</style></head><body>
+<div class="header"><h1>PRIME MOVE</h1><small>Secure Parcel Tracking</small></div>
+<div class="card">
+<p><b>Customer:</b> <span id="cName"></span></p>
+<p><b>Code:</b> <span id="cCode" style="background:#000;color:#ffcc00;padding:5px 12px;border-radius:20px"></span></p>
+<div class="status" id="cStatus">WAREHOUSE</div>
+<div class="row"><span>📍 Address</span><span id="cAddr"></span></div>
+<div class="row"><span>📞 Customer Phone</span><span id="cPhone"></span></div>
+
+<div class="driver-box">
+<h3 style="color:#ffcc00;margin:0 0 10px 0">🚚 Driver Assigned</h3>
+<p>Name: <span id="cDriver"></span></p>
+<p>Phone: <span id="cDriverPhone" style="color:#25D366"></span></p>
+</div>
+
+<div class="live-box" id="liveBox" style="display:none">
+<h3 style="margin:0;color:#000">📍 LIVE UPDATE FROM DRIVER</h3>
+<p><b>Current Location:</b> <span id="liveLoc"></span></p>
+<p><b>Driver Status:</b> <span id="liveStatus"></span></p>
+<p><b>ETA:</b> <span id="liveEta"></span></p>
+<p style="font-size:11px;color:gray">Updated: <span id="liveTime"></span></p>
+</div>
+
+<p style="text-align:center;color:gray;font-size:11px;margin-top:20px">Prime Move Logistics - Durban</p>
+</div>
+
+<script>
+let p=new URLSearchParams(location.search);
+function g(k,d){return p.get(k)||d}
+document.getElementById('cName').innerText=g('n','Customer');
+document.getElementById('cCode').innerText=g('track',g('code','PL...'));
+document.getElementById('cAddr').innerText=g('a','Address not set');
+document.getElementById('cPhone').innerText=g('cp','');
+document.getElementById('cDriver').innerText=g('dn','Not assigned');
+document.getElementById('cDriverPhone').innerText=g('dp','');
+let s=g('s','WAREHOUSE');let stEl=document.getElementById('cStatus');stEl.innerText=s;stEl.className='status '+s.replace(/ /g,'-');
+
+function checkLive(){
+ let code=g('track','');
+ let data=localStorage.getItem('driver_'+code);
+ if(data){
+  let j=JSON.parse(data);
+  document.getElementById('liveBox').style.display='block';
+  document.getElementById('liveLoc').innerText=j.loc;
+  document.getElementById('liveStatus').innerText=j.st;
+  document.getElementById('liveEta').innerText=j.eta;
+  document.getElementById('liveTime').innerText=new Date(j.time).toLocaleString();
+ }
+}
+checkLive();setInterval(checkLive,3000);
+</script></body></html>

@@ -1,0 +1,81 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>PRIME MOVE ADMIN</title><style>
+body{font-family:Arial;background:#f5f5f5;margin:0;padding:15px}
+h2{text-align:center} .card{background:#fff;max-width:520px;margin:15px auto;padding:18px;border-radius:14px;box-shadow:0 2px 10px rgba(0,0,0,.1)}
+label{font-size:11px;font-weight:bold;margin-top:12px;display:block}
+input,select{width:100%;padding:13px;border:1px solid #ddd;border-radius:10px;margin-top:4px;box-sizing:border-box}
+.status-big{padding:20px;font-size:20px;font-weight:bold;background:#000;color:#ffcc00;text-align:center}
+button{width:100%;padding:14px;border:none;border-radius:10px;font-weight:bold;margin-top:10px}
+.btn-black{background:#000;color:#ffcc00} .btn-green{background:#25D366;color:#fff} .btn-save{background:#111;color:#fff;border:2px solid #ffcc00}
+.driver-slot{background:#f8f9fa;border:1px solid #eee;padding:12px;border-radius:10px;margin:8px 0}
+.row{display:flex;gap:8px} textarea{width:100%;padding:10px;border-radius:8px;box-sizing:border-box;margin-top:8px;background:#f0f0f0}
+</style></head><body>
+<h2>PRIME MOVE ADMIN</h2>
+<div class="card">
+<label>NAME AND SURNAME</label><input id="fullname" placeholder="e.g. Mpho Sono">
+<label>TELEPHONE NUMBER</label><input id="phone" placeholder="+27...">
+<label>ADDRESS</label><input id="address" placeholder="787 Theme Street">
+<label style="color:#b00000;margin-top:15px">📦 PARCEL STATUS - BIG</label>
+<select id="status" class="status-big"><option>WAREHOUSE</option><option>OUT FOR DELIVERY</option><option>DELIVERED</option><option>FAILED</option></select>
+<label>ASSIGN DRIVER (From your 7 below)</label><select id="assignDriver"></select>
+<button class="btn-black" onclick="gen()">GENERATE CUSTOMER LINK</button>
+<textarea id="out" rows="4" readonly placeholder="Link will appear here..."></textarea>
+<button class="btn-green" onclick="copyL()">📲 COPY LINK</button>
+</div>
+
+<div class="card">
+<h3 style="color:#b00000;text-align:center">🚚 MY 7 DRIVERS - EDIT HERE</h3>
+<div id="driversArea"></div>
+<button class="btn-save" onclick="saveDrivers()">💾 SAVE MY 7 DRIVERS</button>
+<div id="preview" style="background:#e8f5e9;padding:10px;border-radius:8px;margin-top:10px;font-size:12px"></div>
+</div>
+
+<script>
+let drivers=[];
+function init(){
+ let saved=localStorage.getItem('prime_drivers');
+ if(saved){drivers=JSON.parse(saved)}else{
+  drivers=[
+   {name:'Sphumelele Motaung',phone:'+27828618192',code:'PM1001'},
+   {name:'Driver 2',phone:'+27',code:'PM1002'},
+   {name:'Driver 3',phone:'+27',code:'PM1003'},
+   {name:'Driver 4',phone:'+27',code:'PM1004'},
+   {name:'Driver 5',phone:'+27',code:'PM1005'},
+   {name:'Driver 6',phone:'+27',code:'PM1006'},
+   {name:'Driver 7',phone:'+27',code:'PM1007'},
+  ]
+ }
+ render();
+}
+function render(){
+ let area=document.getElementById('driversArea');area.innerHTML='';
+ drivers.forEach((d,i)=>{
+  area.innerHTML+=`<div class="driver-slot"><b>DRIVER ${i+1}</b>
+  <label>NAME AND SURNAME</label><input id="dname${i}" value="${d.name}">
+  <div class="row"><div style="flex:1"><label>CELLPHONE</label><input id="dphone${i}" value="${d.phone}"></div>
+  <div style="flex:1"><label>LOGIN CODE</label><input id="dcode${i}" value="${d.code}"></div></div></div>`;
+ });
+ let sel=document.getElementById('assignDriver');sel.innerHTML='';
+ drivers.forEach((d,i)=>{sel.innerHTML+=`<option value="${i}">${d.name} - ${d.phone} (${d.code})</option>`});
+ let pv=document.getElementById('preview');let h='<b>Your 7 Drivers:</b><br>';drivers.forEach((d,i)=>{h+=`${i+1}. ${d.name} | ${d.phone} | <b>${d.code}</b><br>`});pv.innerHTML=h;
+}
+function saveDrivers(){
+ let nd=[];for(let i=0;i<7;i++){nd.push({name:document.getElementById('dname'+i).value.trim()||'Driver '+(i+1),phone:document.getElementById('dphone'+i).value.trim(),code:document.getElementById('dcode'+i).value.trim().toUpperCase()||'PM100'+(i+1)})}
+ drivers=nd;localStorage.setItem('prime_drivers',JSON.stringify(drivers));render();alert('✅ Saved sis! Drivers can now login with their codes');
+}
+function gen(){
+ let name=document.getElementById('fullname').value.trim();
+ let phone=document.getElementById('phone').value.trim();
+ let addr=document.getElementById('address').value.trim();
+ let status=document.getElementById('status').value;
+ let idx=document.getElementById('assignDriver').value;
+ if(!name){alert('Enter name');return}
+ let drv=drivers[idx];
+ let code='PL'+Math.floor(100000+Math.random()*900000);
+ let base=location.origin+'/';
+ let link=base+'?track='+encodeURIComponent(code)+'&n='+encodeURIComponent(name)+'&cp='+encodeURIComponent(phone)+'&a='+encodeURIComponent(addr)+'&s='+encodeURIComponent(status)+'&dn='+encodeURIComponent(drv.name)+'&dp='+encodeURIComponent(drv.phone)+'&dc='+encodeURIComponent(drv.code);
+ localStorage.setItem('prime_'+code,JSON.stringify({name,phone,addr,status,drv}));
+ document.getElementById('out').value=link;
+}
+function copyL(){let v=document.getElementById('out').value;if(!v){alert('Generate first');return}navigator.clipboard.writeText(v);alert('Copied sis!');}
+init();
+</script></body></html>
