@@ -2,75 +2,90 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PRIME MOVE ADMIN - FINAL</title>
+<title>PRIME MOVE ADMIN</title>
 <style>
-body{font-family:Arial;background:#f5f5f5;margin:0;padding:12px}
-.card{background:#fff;border-radius:15px;padding:18px;max-width:500px;margin:auto;box-shadow:0 4px 12px rgba(0,0,0,.1)}
-h1{text-align:center;font-size:20px}label{font-weight:bold;font-size:11px;display:block;margin:10px 0 4px}
-input,select{width:100%;padding:11px;border:1px solid #ddd;border-radius:8px;box-sizing:border-box;font-size:13px}
-.btn{width:100%;padding:12px;border:none;border-radius:8px;font-weight:bold;font-size:13px;margin-top:10px;cursor:pointer}
-.btn-black{background:#111;color:#FFD700}.btn-green{background:#25D366;color:#fff}.btn-red{background:#ff3b30;color:#fff;padding:6px 10px;width:auto;font-size:11px;margin:5px 3px}
-.linkbox{background:#f9f9f9;border:1px dashed #999;padding:10px;border-radius:8px;word-break:break-all;font-size:11px;margin-top:8px;min-height:30px}
-.order{background:#fafafa;border:1px solid #eee;border-radius:10px;padding:10px;margin-top:10px;font-size:12px}
-.small{font-size:10px;color:#666}
+body{font-family:Arial;background:#f5f5f5;margin:0;padding:10px}
+.card{background:#fff;border-radius:12px;padding:15px;max-width:600px;margin:auto;box-shadow:0 2px 10px rgba(0,0,0,.1)}
+input,select{width:100%;padding:10px;margin:5px 0;border:1px solid #ddd;border-radius:8px;box-sizing:border-box}
+.btn{width:100%;padding:12px;border:none;border-radius:8px;font-weight:bold;margin-top:8px;cursor:pointer}
+.btn-black{background:#111;color:#FFD700}.btn-blue{background:#007AFF;color:#fff}.btn-red{background:#ff3b30;color:#fff}.btn-green{background:#00c853;color:#fff}
+.row{border:1px solid #eee;padding:8px;border-radius:8px;margin:6px 0;font-size:12px}
+small{font-size:10px;color:#888}
 </style>
 </head>
 <body>
 <div class="card">
-<h1>PRIME MOVE ADMIN</h1>
-<label>NAME AND SURNAME</label><input id="name" placeholder="Mpho Sono">
-<label>TELEPHONE NUMBER</label><input id="phone" placeholder="0834936558">
-<label>ADDRESS</label><input id="address" placeholder="7704 Motanyane Street">
-<label>PARCEL STATUS</label>
-<select id="status"><option>WAREHOUSE</option><option>DISPATCHED</option><option>ON THE WAY</option><option>DELIVERED</option><option>FAILED</option></select>
-<label>ASSIGN DRIVER (7 drivers)</label>
-<select id="driver">
-<option value="Sphumelele Motaung|+27828618192|PM1001">Sphumelele Motaung - 0828618192 - PM1001</option>
-<option value="Thabo Ndlovu|+27821234567|PM1002">Thabo Ndlovu - 0821234567 - PM1002</option>
-<option value="Lerato Khumalo|+27829876543|PM1003">Lerato Khumalo - 0829876543 - PM1003</option>
-<option value="Bongani Zulu|+27831112222|PM1004">Bongani Zulu - 0831112222 - PM1004</option>
-<option value="Noluthando Dlamini|+27834445555|PM1005">Noluthando Dlamini - 0834445555 - PM1005</option>
-<option value="Sipho Mahlangu|+27836667777|PM1006">Sipho Mahlangu - 0836667777 - PM1006</option>
-<option value="Precious Molefe|+27838889999|PM1007">Precious Molefe - 0838889999 - PM1007</option>
-</select>
-<button class="btn btn-black" onclick="generate()">GENERATE CUSTOMER LINK</button>
-<div id="linkBox" class="linkbox">Link will appear here...</div>
-<button class="btn btn-green" onclick="copyLink()">📲 COPY LINK & WHATSAPP CUSTOMER</button>
-<hr><h3>📋 ALL ORDERS (<span id="cnt">0</span>)</h3><div id="list"></div>
+<h2 style="margin:0;text-align:center">PRIME MOVE ADMIN</h2>
+<p style="text-align:center;font-size:11px;color:#666">YOUR BUSINESS - YOUR DRIVERS - FOREVER FREE</p>
+
+<div style="background:#FFF9C4;padding:10px;border-radius:8px;margin:10px 0">
+<h3 style="margin:0 0 5px;font-size:13px">🚚 MY DRIVERS - EDIT HERE!</h3>
+<div id="driverList"></div>
+<input id="d_name" placeholder="Driver Name e.g. Thabo">
+<input id="d_phone" placeholder="Driver Phone e.g. +2782...">
+<input id="d_code" placeholder="Driver Code e.g. PM1001">
+<button class="btn btn-blue" onclick="addDriver()">+ ADD DRIVER</button>
+<small>Your drivers save on this phone forever. Delete fake ones, add real ones.</small>
 </div>
+
+<hr>
+
+<input id="c_name" placeholder="Customer Name">
+<input id="c_phone" placeholder="Customer Phone">
+<input id="c_addr" placeholder="Customer Address">
+<select id="c_status"><option>WAREHOUSE</option><option>DISPATCHED</option><option>ON THE WAY</option><option>DELIVERED</option><option>FAILED</option></select>
+<select id="c_driver"></select>
+
+<button class="btn btn-black" onclick="generateOrder()">✅ GENERATE CUSTOMER LINK</button>
+<input id="linkOut" readonly placeholder="Link will appear here..." style="background:#f0f0f0">
+<button class="btn btn-green" onclick="copyLink()">📋 COPY LINK</button>
+<button class="btn btn-blue" onclick="openLink()">🔗 OPEN TRACKING</button>
+
+<div id="orders" style="margin-top:15px"></div>
+</div>
+
 <script>
-const BASE="https://mmohlala322-maker.github.io/";
-function getOrders(){return JSON.parse(localStorage.getItem("pm_final")||"[]")}
-function save(o){localStorage.setItem("pm_final",JSON.stringify(o))}
-let counter=parseInt(localStorage.getItem("pm_counter")||"1000");
-function generate(){
- const n=document.getElementById("name").value.trim(), cp=document.getElementById("phone").value.trim(), a=document.getElementById("address").value.trim(), s=document.getElementById("status").value, d=document.getElementById("driver").value;
- if(!n||!cp||!a){alert("Fill Name, Phone, Address");return}
- const [dn,dp,dc]=d.split("|"); counter++; localStorage.setItem("pm_counter",counter);
- const code="PL"+counter;
- const order={code,n,cp,a,s,dn,dp,dc,date:new Date().toLocaleString()};
- const orders=getOrders(); orders.unshift(order); save(orders);
- const link=`${BASE}?track=${code}&n=${encodeURIComponent(n)}&cp=${encodeURIComponent(cp)}&a=${encodeURIComponent(a)}&s=${encodeURIComponent(s)}&dn=${encodeURIComponent(dn)}&dp=${encodeURIComponent(dp)}&dc=${encodeURIComponent(dc)}`;
- document.getElementById("linkBox").innerText=link; document.getElementById("linkBox").dataset.link=link;
- render(); alert("✅ "+code+" Created! Link ready - works on ANY phone, no credits!");
- document.getElementById("name").value="";document.getElementById("phone").value="";document.getElementById("address").value="";
-}
-function render(){
- const orders=getOrders(); document.getElementById("cnt").innerText=orders.length;
- const list=document.getElementById("list"); list.innerHTML="";
- orders.forEach((o,i)=>{
-  const div=document.createElement("div"); div.className="order";
-  div.innerHTML=`<b>${o.code} - ${o.n}</b><br><span class="small">${o.cp} | ${o.a}<br>📦 ${o.s} | 🚚 ${o.dn} - ${o.dp} - ${o.dc}<br>${o.date}</span><br>
-  <a href="${BASE}?track=${o.code}&n=${encodeURIComponent(o.n)}&cp=${encodeURIComponent(o.cp)}&a=${encodeURIComponent(o.a)}&s=${encodeURIComponent(o.s)}&dn=${encodeURIComponent(o.dn)}&dp=${encodeURIComponent(o.dp)}&dc=${encodeURIComponent(o.dc)}" target="_blank" style="font-size:10px">🔗 TRACK LINK</a><br>
-  <button class="btn-red" onclick="whatsAppCust('${o.cp}','${o.code}','${o.n}')">WhatsApp Cust</button>
-  <button class="btn-red" onclick="delOrder(${i})">DELETE</button>`;
-  list.appendChild(div);
+const BASE="https://mmohlala322-maker.github.io/primemove/";
+function getDrivers(){return JSON.parse(localStorage.getItem("pm_drivers")||'[{"name":"Sphumelele Motaung","phone":"+27828618192","code":"PM1001"}]')}
+function saveDrivers(d){localStorage.setItem("pm_drivers",JSON.stringify(d));renderDrivers()}
+function renderDrivers(){
+ const drivers=getDrivers();
+ const list=document.getElementById("driverList"); const sel=document.getElementById("c_driver");
+ list.innerHTML=""; sel.innerHTML="";
+ drivers.forEach((d,i)=>{
+  list.innerHTML+=`<div class="row"><b>${d.name}</b> - ${d.phone} - ${d.code} <button onclick="delDriver(${i})" style="float:right;background:#ff3b30;color:#fff;border:none;border-radius:4px;padding:2px 6px">X</button></div>`;
+  sel.innerHTML+=`<option value="${i}">${d.name} (${d.code})</option>`;
  });
 }
-function delOrder(i){if(confirm("Delete this order?")){const o=getOrders();o.splice(i,1);save(o);render()}}
-function copyLink(){const l=document.getElementById("linkBox").dataset.link||document.getElementById("linkBox").innerText; if(!l||l.includes("Link will")){alert("Generate first");return} navigator.clipboard.writeText(l).then(()=>{const phone=document.getElementById("phone").value||""; if(phone){window.open(`https://wa.me/${phone.replace(/[^0-9]/g,"")}?text=${encodeURIComponent("Your Prime Move Parcel: "+l)}`)}else{alert("Copied: "+l)}})}
-function whatsAppCust(cp,code,name){const orders=getOrders();const o=orders.find(x=>x.code===code)||orders[0];const link=`${BASE}?track=${code}&n=${encodeURIComponent(name)}&cp=${encodeURIComponent(cp)}`; window.open(`https://wa.me/${cp.replace(/[^0-9]/g,"")}?text=${encodeURIComponent("Hi "+name+" Your parcel "+code+" : "+link)}`)}
-render();
+function addDriver(){
+ const n=document.getElementById("d_name").value.trim(); const p=document.getElementById("d_phone").value.trim(); const c=document.getElementById("d_code").value.trim();
+ if(!n||!p||!c){alert("Fill name, phone, code");return}
+ const d=getDrivers(); d.push({name:n,phone:p,code:c}); saveDrivers(d);
+ document.getElementById("d_name").value="";document.getElementById("d_phone").value="";document.getElementById("d_code").value="";
+}
+function delDriver(i){const d=getDrivers(); d.splice(i,1); saveDrivers(d)}
+function getOrders(){return JSON.parse(localStorage.getItem("pm_final")||"[]")}
+function saveOrders(o){localStorage.setItem("pm_final",JSON.stringify(o)); renderOrders()}
+function generateOrder(){
+ const n=document.getElementById("c_name").value.trim(); const cp=document.getElementById("c_phone").value.trim(); const a=document.getElementById("c_addr").value.trim();
+ const s=document.getElementById("c_status").value; const di=document.getElementById("c_driver").value;
+ if(!n||!cp||!a){alert("Fill customer name, phone, address");return}
+ const drivers=getDrivers(); const drv=drivers[di];
+ const code="PL"+Math.floor(100000+Math.random()*899999);
+ const order={code,n,cp,a,s,dn:drv.name,dp:drv.phone,dc:drv.code,date:new Date().toLocaleString()};
+ const orders=getOrders(); orders.unshift(order); saveOrders(orders);
+ const link=`${BASE}?track=${code}&n=${encodeURIComponent(n)}&cp=${encodeURIComponent(cp)}&a=${encodeURIComponent(a)}&s=${encodeURIComponent(s)}&dn=${encodeURIComponent(drv.name)}&dp=${encodeURIComponent(drv.phone)}&dc=${encodeURIComponent(drv.code)}`;
+ document.getElementById("linkOut").value=link;
+}
+function copyLink(){const l=document.getElementById("linkOut").value; if(!l){alert("Generate first");return} navigator.clipboard.writeText(l); alert("Copied! Send to customer on WhatsApp")}
+function openLink(){const l=document.getElementById("linkOut").value; if(!l){alert("Generate first");return} window.open(l,"_blank")}
+function renderOrders(){
+ const orders=getOrders(); const div=document.getElementById("orders"); div.innerHTML="<h3 style='font-size:13px'>📦 Recent Orders</h3>";
+ orders.slice(0,20).forEach(o=>{
+  div.innerHTML+=`<div class="row"><b>${o.code}</b> - ${o.n} - ${o.s}<br><small>${o.dn} | ${o.date}</small></div>`;
+ });
+}
+renderDrivers(); renderOrders();
 </script>
 </body>
- </html>
+</html>
