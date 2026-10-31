@@ -5,7 +5,7 @@ body{font-family:Arial;background:#f8fafc;margin:0;padding-bottom:30px}
 .h{background:#111;color:#fff;padding:24px;text-align:center;font-size:28px;font-weight:bold}
 .s{background:#fff;margin:-14px 14px 14px;padding:18px;border-radius:16px;box-shadow:0 2px 10px rgba(0,0,0,0.08)}
 input{width:100%;padding:15px;border-radius:10px;border:2px solid #e2e8f0;box-sizing:border-box;font-size:16px}
-.btn{width:100%;padding:15px;border-radius:10px;border:none;font-weight:bold;font-size:16px;margin-top:12px}
+.btn{width:100%;padding:15px;border-radius:10px;border:none;font-weight:bold;font-size:16px;margin-top:12px;cursor:pointer}
 .black{background:#111;color:#fff}
 .card{background:#fff;margin:14px;padding:18px;border-radius:14px;box-shadow:0 2px 8px rgba(0,0,0,0.08)}
 .label{font-size:11px;color:#94a3b8}
@@ -14,7 +14,7 @@ input{width:100%;padding:15px;border-radius:10px;border:2px solid #e2e8f0;box-si
 .badge{padding:7px 12px;border-radius:6px;font-size:14px;background:#fef3c7;color:#111}
 .driverBox{background:#f8fafc;padding:12px;border-radius:10px;margin-top:12px}
 .callRow{display:flex;gap:10px;margin-top:14px}
-.callBtn{flex:1;padding:13px;border-radius:10px;border:none;font-weight:bold}
+.callBtn{flex:1;padding:13px;border-radius:10px;border:none;font-weight:bold;text-align:center}
 </style></head><body>
 <div class=h>PrimeMove</div>
 <div class=s>
@@ -24,8 +24,13 @@ input{width:100%;padding:15px;border-radius:10px;border:2px solid #e2e8f0;box-si
 <div id=result></div>
 <script>
 function getOrders(){
+ let defaults=[
+  {id:"PL999580",customerName:"Pabi Moloi",phone:"0834936558",address:"7704 Motanyane Street",driverName:"Sphumelele Motaung",driverPhone:"0828618192",driverCode:"SPHUMELELE1",status:"Assigned"},
+  {id:"PL262857",customerName:"Test Customer",phone:"0810000000",address:"Durban, KZN",driverName:"PrimeMove Driver",driverPhone:"0810000000",driverCode:"PM-DRV-01",status:"In Warehouse"},
+  {id:"PL262858",customerName:"Sample Customer",phone:"0820000000",address:"Durban",driverName:"Sphumelele Motaung",driverPhone:"0828618192",driverCode:"SPHUMELELE1",status:"In Warehouse"}
+ ];
  let keys=['primemove_orders','orders','parcels','primeMoveParcels','pm_orders'];
- let all=[];
+ let all=[...defaults];
  for(let k of keys){
   try{let v=localStorage.getItem(k); if(v){let p=JSON.parse(v); if(Array.isArray(p)) all=all.concat(p);}}catch(e){}
  }
@@ -50,6 +55,7 @@ function renderParcel(o){
     <a href="tel:${driverPhone}" style="flex:1;text-decoration:none"><button class="callBtn black">📞 CALL</button></a>
     <a href="https://wa.me/27${driverPhone.toString().slice(-9)}" target="_blank" style="flex:1;text-decoration:none"><button class="callBtn" style="background:#22c55e;color:#fff">WhatsApp</button></a>
   </div>
+  <div style="text-align:center;margin-top:14px"><a href="https://mmohlala322-maker.github.io/primemove/" style="color:#6366f1;text-decoration:none;font-size:14px">Go to website</a></div>
  </div>`;
 }
 function doTrack(){
