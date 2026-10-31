@@ -1,35 +1,140 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PrimeMove Admin Fixed</title>
-<style>body{font-family:Arial;background:#f5f5f5;margin:0;padding:10px}.card{background:white;padding:12px;border-radius:10px;margin-bottom:10px}input,select,button{width:100%;padding:12px;margin:5px 0;border-radius:8px;border:1px solid #ddd}button{background:#111;color:white;font-weight:bold;border:none}button.yellow{background:#FFD700;color:#000}button.blue{background:#0d6efd}.order{border-left:4px solid #FFD700;padding-left:10px;margin-bottom:10px}</style>
+<title>PrimeMove Admin</title>
+<style>
+body{font-family:Arial;background:#f4f6f8;margin:0;padding:10px}
+.card{background:white;padding:15px;border-radius:12px;margin-bottom:12px;box-shadow:0 2px 6px rgba(0,0,0,0.08)}
+input,select,button{width:100%;padding:12px;margin:6px 0;border-radius:8px;border:1px solid #ddd;box-sizing:border-box}
+button{background:#111;color:white;font-weight:bold;border:none;cursor:pointer}
+.yellow{background:#FFD700;color:#000}
+.blue{background:#0d6efd}
+.green{background:#198754}
+h2,h3{margin:8px 0}
+.small{font-size:12px;color:#666;word-break:break-all}
+.order{border-left:4px solid #FFD700;padding:8px;margin-bottom:8px;background:#fffbe6;border-radius:6px}
+.driver{border-left:4px solid #0d6efd;padding:8px;margin-bottom:8px;background:#e8f0ff;border-radius:6px}
+</style>
 </head>
 <body>
 <h2>🚚 PrimeMove Admin</h2>
+
 <div class="card">
+<h3>👤 My Drivers - Add Driver</h3>
+<input id="dName" placeholder="Driver Full Name (e.g. John Doe)">
+<input id="dPhone" placeholder="Driver Phone (e.g. 0712345678)">
+<input id="dCode" placeholder="Driver Code (e.g. PM1005)">
+<button onclick="addDriver()" class="blue">+ ADD DRIVER</button>
+<div id="driversList" style="margin-top:10px"></div>
+</div>
+
+<div class="card">
+<h3>📦 Create Order</h3>
 <input id="cName" placeholder="Customer Name">
 <input id="cPhone" placeholder="Customer Phone">
 <input id="cAddress" placeholder="Delivery Address">
-<input id="cAmount" placeholder="Amount">
-<input id="cFee" placeholder="Delivery Fee">
-<select id="cDriver"><option>PM1001</option><option>PM1002</option><option>PM1003</option><option>PM1004</option></select>
+<input id="cAmount" placeholder="Amount (e.g. 250)">
+<input id="cFee" placeholder="Delivery Fee (e.g. 50)">
+<select id="cDriver"></select>
 <button onclick="createOrder()">CREATE ORDER</button>
-<button onclick="generateCustomerLink()" style="background:#0d6efd;color:white">🔗 GENERATE CUSTOMER LINK</button>
-<button onclick="sendToDriver()" style="background:#FFD700;color:#000">📤 SEND TO DRIVER - SYNC ORDERS</button>
-<div id="linkBox" style="word-break:break-all;margin-top:10px;font-size:12px"></div>
+<button onclick="generateCustomerLink()" class="green">🔗 GENERATE CUSTOMER LINK</button>
+<button onclick="sendToDriver()" class="yellow">📤 SEND TO DRIVER - SYNC ORDERS</button>
+<div id="linkBox" class="small" style="margin-top:10px"></div>
 </div>
-<div class="card"><h3>Orders (<span id="count">0</span>)</h3><div id="ordersList"></div></div>
+
+<div class="card">
+<h3>Orders (<span id="count">0</span>) <button onclick="fixOrders()" style="width:auto;padding:5px 10px;font-size:11px;background:#ff9800;margin-left:10px">FIX UNDEFINED</button></h3>
+<div id="ordersList"></div>
+</div>
+
 <script>
-let orders=JSON.parse(localStorage.getItem("pm_final")||"[]");
-function save(){localStorage.setItem("pm_final",JSON.stringify(orders));render();}
-function createOrder(){let n=cName.value.trim(),p=cPhone.value.trim(),a=cAddress.value.trim(),am=cAmount.value.trim(),f=cFee.value.trim(),d=cDriver.value;if(!n||!p){alert("Fill name & phone");return;}let id="PL"+Math.floor(100000+Math.random()*900000);orders.unshift({id:id,customerName:n,customerPhone:p,deliveryAddress:a,amount:am,deliveryFee:f,driverCode:d,status:"Assigned",createdAt:new Date().toISOString()});save();cName.value="";cPhone.value="";cAddress.value="";cAmount.value="";cFee.value="";alert("Created "+id);}
-function render(){count.textContent=orders.length;let h="";orders.forEach(o=>{h+=`<div class="order card"><b>${o.id}</b> - ${o.customerName}<br><small>${o.deliveryAddress} | R${o.amount} | Driver: ${o.driverCode}</small><br><button onclick="delOrder('${o.id}')" style="background:red;padding:5px;margin-top:5px">Delete</button></div>`});ordersList.innerHTML=h||"No orders on this phone.";}
-function delOrder(id){if(confirm("Delete "+id+"?")){orders=orders.filter(o=>o.id!==id);save();}}
-function generateCustomerLink(){if(orders.length==0){alert("No orders");return;}let b=btoa(encodeURIComponent(JSON.stringify(orders)));let l="https://mmohlala322-maker.github.io/primemove/index.html?sync="+b;linkBox.innerHTML="Customer Link:<br><a href='"+l+"'>"+l+"</a>";prompt("Copy customer link:",l);}
-function sendToDriver(){if(orders.length==0){alert("No orders!");return;}let code=prompt("Driver code?","PM1001")||"PM1001";let b=btoa(encodeURIComponent(JSON.stringify(orders)));let l="https://mmohlala322-maker.github.io/primemove/driver.html?driver="+code+"&sync="+b;if(confirm("Send "+orders.length+" parcels to "+code+"?")){window.open("https://wa.me/?text="+encodeURIComponent("🚚 Click for your parcels: "+l),"_blank");}else{linkBox.innerHTML="Driver Link:<br><a href='"+l+"'>"+l+"</a>";prompt("Copy link:",l);}}
-render();
+// Drivers
+let drivers = JSON.parse(localStorage.getItem("pm_drivers")||"[]");
+if(drivers.length==0){
+ drivers=[{code:"PM1001",name:"Driver 1",phone:""},{"code":"PM1002",name:"Driver 2",phone:""},{"code":"PM1003",name:"Driver 3",phone:""},{"code":"PM1004",name:"Driver 4",phone:""}];
+ localStorage.setItem("pm_drivers",JSON.stringify(drivers));
+}
+function saveDrivers(){localStorage.setItem("pm_drivers",JSON.stringify(drivers));renderDrivers();}
+function addDriver(){
+ let n=document.getElementById("dName").value.trim();
+ let p=document.getElementById("dPhone").value.trim();
+ let c=document.getElementById("dCode").value.trim().toUpperCase();
+ if(!c){alert("Enter driver code");return;}
+ if(drivers.find(d=>d.code===c)){alert("Driver code exists");return;}
+ drivers.push({code:c,name:n||c,phone:p});
+ saveDrivers();
+ document.getElementById("dName").value="";document.getElementById("dPhone").value="";document.getElementById("dCode").value="";
+}
+function deleteDriver(code){if(confirm("Delete "+code+"?")){drivers=drivers.filter(d=>d.code!==code);saveDrivers();}}
+function renderDrivers(){
+ let sel=document.getElementById("cDriver"); sel.innerHTML="";
+ drivers.forEach(d=>{let o=document.createElement("option");o.value=d.code;o.textContent=d.code+" - "+d.name;sel.appendChild(o);});
+ let html=""; drivers.forEach(d=>{html+=`<div class="driver"><b>${d.code}</b> - ${d.name} (${d.phone}) <button onclick="deleteDriver('${d.code}')" style="background:red;padding:4px;margin-top:4px">Delete</button></div>`});
+ document.getElementById("driversList").innerHTML=html;
+}
+renderDrivers();
+
+// Orders - robust reader
+function getOrdersRaw(){
+ let raw = localStorage.getItem("pm_final") || localStorage.getItem("pm_orders") || "[]";
+ try{ let arr=JSON.parse(raw); if(!Array.isArray(arr)) return []; return arr; }catch(e){ return []; }
+}
+let orders = getOrdersRaw();
+function normalizeOrder(o){
+ // fix undefined orders - support many old formats
+ return {
+  id: o.id || o.orderId || o.pl || o.code || "PL"+Math.floor(100000+Math.random()*900000),
+  customerName: o.customerName || o.cName || o.name || o.customer || "Customer",
+  customerPhone: o.customerPhone || o.cPhone || o.phone || "",
+  deliveryAddress: o.deliveryAddress || o.cAddress || o.address || "",
+  amount: o.amount || o.cAmount || o.total || "",
+  deliveryFee: o.deliveryFee || o.cFee || o.fee || "",
+  driverCode: o.driverCode || o.cDriver || o.driver || "PM1001",
+  status: o.status || "Assigned",
+  createdAt: o.createdAt || new Date().toISOString()
+ };
+}
+function saveOrders(){ localStorage.setItem("pm_final", JSON.stringify(orders)); renderOrders(); }
+function createOrder(){
+ let n=document.getElementById("cName").value.trim();
+ let p=document.getElementById("cPhone").value.trim();
+ let a=document.getElementById("cAddress").value.trim();
+ let am=document.getElementById("cAmount").value.trim();
+ let f=document.getElementById("cFee").value.trim();
+ let d=document.getElementById("cDriver").value;
+ if(!n||!p){alert("Fill name & phone");return;}
+ let id="PL"+Math.floor(100000+Math.random()*900000);
+ orders.unshift({id:id,customerName:n,customerPhone:p,deliveryAddress:a,amount:am,deliveryFee:f,driverCode:d,status:"Assigned",createdAt:new Date().toISOString()});
+ saveOrders();
+ document.getElementById("cName").value="";document.getElementById("cPhone").value="";document.getElementById("cAddress").value="";document.getElementById("cAmount").value="";document.getElementById("cFee").value="";
+}
+function renderOrders(){
+ document.getElementById("count").textContent=orders.length;
+ let html="";
+ orders.forEach(o=>{
+  let no=normalizeOrder(o);
+  html+=`<div class="order"><b>${no.id}</b> - ${no.customerName} (${no.customerPhone})<br><span class="small">${no.deliveryAddress} | R${no.amount} + R${no.deliveryFee} fee | Driver: ${no.driverCode} | ${no.status}</span><br><button onclick="delOrder('${no.id}')" style="background:red;padding:5px;margin-top:5px">Delete</button></div>`;
+ });
+ document.getElementById("ordersList").innerHTML=html||"No orders on this phone. Orders are saved only on THIS phone.";
+}
+function delOrder(id){ if(confirm("Delete "+id+"?")){ orders=orders.filter(o=>{let no=normalizeOrder(o); return no.id!==id;}); saveOrders(); } }
+function fixOrders(){ orders=orders.map(o=>normalizeOrder(o)); saveOrders(); alert("Fixed "+orders.length+" orders!"); }
+function generateCustomerLink(){ if(orders.length==0){alert("No orders");return;} let b=btoa(encodeURIComponent(JSON.stringify(orders))); let l="https://mmohlala322-maker.github.io/primemove/index.html?sync="+b; document.getElementById("linkBox").innerHTML="Customer Link:<br><a href='"+l+"' target='_blank'>"+l+"</a>"; prompt("Copy customer link:",l); }
+function sendToDriver(){
+ if(orders.length==0){alert("No orders!");return;}
+ let code=document.getElementById("cDriver").value || prompt("Driver code?","PM1001")||"PM1001";
+ let b=btoa(encodeURIComponent(JSON.stringify(orders.map(o=>normalizeOrder(o)))));
+ let l="https://mmohlala322-maker.github.io/primemove/driver.html?driver="+code+"&sync="+b;
+ if(confirm("Send "+orders.length+" parcels to "+code+"? OK=WhatsApp")){
+  window.open("https://wa.me/?text="+encodeURIComponent("🚚 Click for your parcels: "+l),"_blank");
+ }else{
+  document.getElementById("linkBox").innerHTML="Driver Link for "+code+":<br><a href='"+l+"'>"+l+"</a>";
+  prompt("Copy link:",l);
+ }
+}
+renderOrders();
 </script>
 </body>
 </html>
