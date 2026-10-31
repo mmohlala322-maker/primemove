@@ -1,91 +1,15 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PRIME MOVE ADMIN</title>
-<style>
-body{font-family:Arial;background:#f5f5f5;margin:0;padding:10px}
-.card{background:#fff;border-radius:12px;padding:15px;max-width:600px;margin:auto;box-shadow:0 2px 10px rgba(0,0,0,.1)}
-input,select{width:100%;padding:10px;margin:5px 0;border:1px solid #ddd;border-radius:8px;box-sizing:border-box}
-.btn{width:100%;padding:12px;border:none;border-radius:8px;font-weight:bold;margin-top:8px;cursor:pointer}
-.btn-black{background:#111;color:#FFD700}.btn-blue{background:#007AFF;color:#fff}.btn-red{background:#ff3b30;color:#fff}.btn-green{background:#00c853;color:#fff}
-.row{border:1px solid #eee;padding:8px;border-radius:8px;margin:6px 0;font-size:12px}
-small{font-size:10px;color:#888}
-</style>
-</head>
-<body>
-<div class="card">
-<h2 style="margin:0;text-align:center">PRIME MOVE ADMIN</h2>
-<p style="text-align:center;font-size:11px;color:#666">YOUR BUSINESS - YOUR DRIVERS - FOREVER FREE</p>
-
-<div style="background:#FFF9C4;padding:10px;border-radius:8px;margin:10px 0">
-<h3 style="margin:0 0 5px;font-size:13px">🚚 MY DRIVERS - EDIT HERE!</h3>
-<div id="driverList"></div>
-<input id="d_name" placeholder="Driver Name e.g. Thabo">
-<input id="d_phone" placeholder="Driver Phone e.g. +2782...">
-<input id="d_code" placeholder="Driver Code e.g. PM1001">
-<button class="btn btn-blue" onclick="addDriver()">+ ADD DRIVER</button>
-<small>Your drivers save on this phone forever. Delete fake ones, add real ones.</small>
-</div>
-
-<hr>
-
-<input id="c_name" placeholder="Customer Name">
-<input id="c_phone" placeholder="Customer Phone">
-<input id="c_addr" placeholder="Customer Address">
-<select id="c_status"><option>WAREHOUSE</option><option>DISPATCHED</option><option>ON THE WAY</option><option>DELIVERED</option><option>FAILED</option></select>
-<select id="c_driver"></select>
-
-<button class="btn btn-black" onclick="generateOrder()">✅ GENERATE CUSTOMER LINK</button>
-<input id="linkOut" readonly placeholder="Link will appear here..." style="background:#f0f0f0">
-<button class="btn btn-green" onclick="copyLink()">📋 COPY LINK</button>
-<button class="btn btn-blue" onclick="openLink()">🔗 OPEN TRACKING</button>
-
-<div id="orders" style="margin-top:15px"></div>
-</div>
-
+<button onclick="sendToDriver()" style="width:100%;padding:12px;margin-top:10px;background:#FFD700;color:#000;border:none;border-radius:8px;font-weight:bold;font-size:14px;">📤 SEND TO DRIVER - SYNC ORDERS</button>
 <script>
-const BASE="https://mmohlala322-maker.github.io/primemove/";
-function getDrivers(){return JSON.parse(localStorage.getItem("pm_drivers")||'[{"name":"Sphumelele Motaung","phone":"+27828618192","code":"PM1001"}]')}
-function saveDrivers(d){localStorage.setItem("pm_drivers",JSON.stringify(d));renderDrivers()}
-function renderDrivers(){
- const drivers=getDrivers();
- const list=document.getElementById("driverList"); const sel=document.getElementById("c_driver");
- list.innerHTML=""; sel.innerHTML="";
- drivers.forEach((d,i)=>{
-  list.innerHTML+=`<div class="row"><b>${d.name}</b> - ${d.phone} - ${d.code} <button onclick="delDriver(${i})" style="float:right;background:#ff3b30;color:#fff;border:none;border-radius:4px;padding:2px 6px">X</button></div>`;
-  sel.innerHTML+=`<option value="${i}">${d.name} (${d.code})</option>`;
- });
+function sendToDriver(){
+  let orders=JSON.parse(localStorage.getItem("pm_final")||"[]");
+  if(orders.length==0){alert("No orders on this phone!");return;}
+  let code=prompt("Driver code?","PM1001")||"PM1001";
+  let b64=btoa(encodeURIComponent(JSON.stringify(orders)));
+  let link="https://mmohlala322-maker.github.io/primemove/driver.html?driver="+code+"&sync="+b64;
+  if(confirm("Send "+orders.length+" parcels to "+code+"?")){
+    window.open("https://wa.me/?text="+encodeURIComponent("🚚 Click for your parcels: "+link),"_blank");
+  }else{
+    prompt("Copy link:",link);
+  }
 }
-function addDriver(){
- const n=document.getElementById("d_name").value.trim(); const p=document.getElementById("d_phone").value.trim(); const c=document.getElementById("d_code").value.trim();
- if(!n||!p||!c){alert("Fill name, phone, code");return}
- const d=getDrivers(); d.push({name:n,phone:p,code:c}); saveDrivers(d);
- document.getElementById("d_name").value="";document.getElementById("d_phone").value="";document.getElementById("d_code").value="";
-}
-function delDriver(i){const d=getDrivers(); d.splice(i,1); saveDrivers(d)}
-function getOrders(){return JSON.parse(localStorage.getItem("pm_final")||"[]")}
-function saveOrders(o){localStorage.setItem("pm_final",JSON.stringify(o)); renderOrders()}
-function generateOrder(){
- const n=document.getElementById("c_name").value.trim(); const cp=document.getElementById("c_phone").value.trim(); const a=document.getElementById("c_addr").value.trim();
- const s=document.getElementById("c_status").value; const di=document.getElementById("c_driver").value;
- if(!n||!cp||!a){alert("Fill customer name, phone, address");return}
- const drivers=getDrivers(); const drv=drivers[di];
- const code="PL"+Math.floor(100000+Math.random()*899999);
- const order={code,n,cp,a,s,dn:drv.name,dp:drv.phone,dc:drv.code,date:new Date().toLocaleString()};
- const orders=getOrders(); orders.unshift(order); saveOrders(orders);
- const link=`${BASE}?track=${code}&n=${encodeURIComponent(n)}&cp=${encodeURIComponent(cp)}&a=${encodeURIComponent(a)}&s=${encodeURIComponent(s)}&dn=${encodeURIComponent(drv.name)}&dp=${encodeURIComponent(drv.phone)}&dc=${encodeURIComponent(drv.code)}`;
- document.getElementById("linkOut").value=link;
-}
-function copyLink(){const l=document.getElementById("linkOut").value; if(!l){alert("Generate first");return} navigator.clipboard.writeText(l); alert("Copied! Send to customer on WhatsApp")}
-function openLink(){const l=document.getElementById("linkOut").value; if(!l){alert("Generate first");return} window.open(l,"_blank")}
-function renderOrders(){
- const orders=getOrders(); const div=document.getElementById("orders"); div.innerHTML="<h3 style='font-size:13px'>📦 Recent Orders</h3>";
- orders.slice(0,20).forEach(o=>{
-  div.innerHTML+=`<div class="row"><b>${o.code}</b> - ${o.n} - ${o.s}<br><small>${o.dn} | ${o.date}</small></div>`;
- });
-}
-renderDrivers(); renderOrders();
 </script>
-</body>
-</html>
