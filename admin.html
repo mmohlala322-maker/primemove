@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PrimeMove Admin</title>
+<title>PrimeMove Admin - Fixed</title>
 <style>
 body{font-family:Arial;background:#f4f6f8;margin:0;padding:10px}
 .card{background:white;padding:15px;border-radius:12px;margin-bottom:12px;box-shadow:0 2px 6px rgba(0,0,0,0.08)}
@@ -23,9 +23,9 @@ h2,h3{margin:8px 0}
 
 <div class="card">
 <h3>👤 My Drivers - Add Driver</h3>
-<input id="dName" placeholder="Driver Full Name (e.g. John Doe)">
-<input id="dPhone" placeholder="Driver Phone (e.g. 0712345678)">
-<input id="dCode" placeholder="Driver Code (e.g. PM1005)">
+<input id="dName" placeholder="Driver Full Name (e.g. Sphumelele)">
+<input id="dPhone" placeholder="Driver Phone (e.g. 0712345678) - IMPORTANT FOR TRACKING">
+<input id="dCode" placeholder="Driver Code (e.g. SPHUMELELE1 or PM1005)">
 <button onclick="addDriver()" class="blue">+ ADD DRIVER</button>
 <div id="driversList" style="margin-top:10px"></div>
 </div>
@@ -34,9 +34,9 @@ h2,h3{margin:8px 0}
 <h3>📦 Create Order</h3>
 <input id="cName" placeholder="Customer Name">
 <input id="cPhone" placeholder="Customer Phone">
-<input id="cAddress" placeholder="Delivery Address">
-<input id="cAmount" placeholder="Amount (e.g. 250)">
-<input id="cFee" placeholder="Delivery Fee (e.g. 50)">
+<input id="cAddress" placeholder="Delivery Address (e.g. 7704 Motanyane Street)">
+<input id="cAmount" placeholder="Amount to collect (e.g. 250) - leave 0 if none">
+<input id="cFee" placeholder="Delivery Fee (e.g. 50) - leave 0 if none">
 <select id="cDriver"></select>
 <button onclick="createOrder()">CREATE ORDER</button>
 <button onclick="generateCustomerLink()" class="green">🔗 GENERATE CUSTOMER LINK</button>
@@ -50,10 +50,9 @@ h2,h3{margin:8px 0}
 </div>
 
 <script>
-// Drivers
 let drivers = JSON.parse(localStorage.getItem("pm_drivers")||"[]");
 if(drivers.length==0){
- drivers=[{code:"PM1001",name:"Driver 1",phone:""},{"code":"PM1002",name:"Driver 2",phone:""},{"code":"PM1003",name:"Driver 3",phone:""},{"code":"PM1004",name:"Driver 4",phone:""}];
+ drivers=[{code:"PM1001",name:"Driver 1",phone:""},{code:"PM1002",name:"Driver 2",phone:""},{code:"PM1003",name:"Driver 3",phone:""},{code:"PM1004",name:"Driver 4",phone:""}];
  localStorage.setItem("pm_drivers",JSON.stringify(drivers));
 }
 function saveDrivers(){localStorage.setItem("pm_drivers",JSON.stringify(drivers));renderDrivers();}
@@ -62,7 +61,8 @@ function addDriver(){
  let p=document.getElementById("dPhone").value.trim();
  let c=document.getElementById("dCode").value.trim().toUpperCase();
  if(!c){alert("Enter driver code");return;}
- if(drivers.find(d=>d.code===c)){alert("Driver code exists");return;}
+ if(drivers.find(d=>d.code===c)){alert("Code exists - delete old first");return;}
+ if(!p){if(!confirm("No phone! Tracking will NOT show driver number. Continue?")) return;}
  drivers.push({code:c,name:n||c,phone:p});
  saveDrivers();
  document.getElementById("dName").value="";document.getElementById("dPhone").value="";document.getElementById("dCode").value="";
@@ -70,28 +70,28 @@ function addDriver(){
 function deleteDriver(code){if(confirm("Delete "+code+"?")){drivers=drivers.filter(d=>d.code!==code);saveDrivers();}}
 function renderDrivers(){
  let sel=document.getElementById("cDriver"); sel.innerHTML="";
- drivers.forEach(d=>{let o=document.createElement("option");o.value=d.code;o.textContent=d.code+" - "+d.name;sel.appendChild(o);});
- let html=""; drivers.forEach(d=>{html+=`<div class="driver"><b>${d.code}</b> - ${d.name} (${d.phone}) <button onclick="deleteDriver('${d.code}')" style="background:red;padding:4px;margin-top:4px">Delete</button></div>`});
+ drivers.forEach(d=>{let o=document.createElement("option");o.value=d.code;o.textContent=d.code+" - "+d.name+" ("+(d.phone||"no phone")+")";sel.appendChild(o);});
+ let html=""; drivers.forEach(d=>{html+=`<div class="driver"><b>${d.code}</b> - ${d.name} <br>📞 ${d.phone||"<span style='color:red'>NO PHONE - ADD PHONE!</span>"} <button onclick="deleteDriver('${d.code}')" style="background:red;padding:4px;margin-top:4px">Delete</button></div>`});
  document.getElementById("driversList").innerHTML=html;
 }
 renderDrivers();
 
-// Orders - robust reader
 function getOrdersRaw(){
  let raw = localStorage.getItem("pm_final") || localStorage.getItem("pm_orders") || "[]";
  try{ let arr=JSON.parse(raw); if(!Array.isArray(arr)) return []; return arr; }catch(e){ return []; }
 }
 let orders = getOrdersRaw();
 function normalizeOrder(o){
- // fix undefined orders - support many old formats
  return {
   id: o.id || o.orderId || o.pl || o.code || "PL"+Math.floor(100000+Math.random()*900000),
   customerName: o.customerName || o.cName || o.name || o.customer || "Customer",
   customerPhone: o.customerPhone || o.cPhone || o.phone || "",
   deliveryAddress: o.deliveryAddress || o.cAddress || o.address || "",
-  amount: o.amount || o.cAmount || o.total || "",
-  deliveryFee: o.deliveryFee || o.cFee || o.fee || "",
+  amount: o.amount || o.cAmount || o.total || "0",
+  deliveryFee: o.deliveryFee || o.cFee || o.fee || "0",
   driverCode: o.driverCode || o.cDriver || o.driver || "PM1001",
+  driverName: o.driverName || "",
+  driverPhone: o.driverPhone || "",
   status: o.status || "Assigned",
   createdAt: o.createdAt || new Date().toISOString()
  };
@@ -101,26 +101,38 @@ function createOrder(){
  let n=document.getElementById("cName").value.trim();
  let p=document.getElementById("cPhone").value.trim();
  let a=document.getElementById("cAddress").value.trim();
- let am=document.getElementById("cAmount").value.trim();
- let f=document.getElementById("cFee").value.trim();
+ let am=document.getElementById("cAmount").value.trim()||"0";
+ let f=document.getElementById("cFee").value.trim()||"0";
  let d=document.getElementById("cDriver").value;
  if(!n||!p){alert("Fill name & phone");return;}
+ let drv = drivers.find(x=>x.code===d) || {name:d,phone:""};
  let id="PL"+Math.floor(100000+Math.random()*900000);
- orders.unshift({id:id,customerName:n,customerPhone:p,deliveryAddress:a,amount:am,deliveryFee:f,driverCode:d,status:"Assigned",createdAt:new Date().toISOString()});
+ orders.unshift({id:id,customerName:n,customerPhone:p,deliveryAddress:a,amount:am,deliveryFee:f,driverCode:d,driverName:drv.name,driverPhone:drv.phone,status:"Assigned",createdAt:new Date().toISOString()});
  saveOrders();
  document.getElementById("cName").value="";document.getElementById("cPhone").value="";document.getElementById("cAddress").value="";document.getElementById("cAmount").value="";document.getElementById("cFee").value="";
+ alert("Created "+id+" for driver "+d+" ("+drv.phone+") - driver phone SAVED!");
 }
 function renderOrders(){
  document.getElementById("count").textContent=orders.length;
  let html="";
  orders.forEach(o=>{
   let no=normalizeOrder(o);
-  html+=`<div class="order"><b>${no.id}</b> - ${no.customerName} (${no.customerPhone})<br><span class="small">${no.deliveryAddress} | R${no.amount} + R${no.deliveryFee} fee | Driver: ${no.driverCode} | ${no.status}</span><br><button onclick="delOrder('${no.id}')" style="background:red;padding:5px;margin-top:5px">Delete</button></div>`;
+  let phoneInfo = no.driverPhone ? "📞 "+no.driverPhone : "⚠️ NO PHONE";
+  html+=`<div class="order"><b>${no.id}</b> - ${no.customerName} (${no.customerPhone})<br><span class="small">${no.deliveryAddress} | R${no.amount} + R${no.deliveryFee} | Driver: ${no.driverCode} - ${no.driverName||""} ${phoneInfo} | ${no.status}</span><br><button onclick="delOrder('${no.id}')" style="background:red;padding:5px;margin-top:5px;width:auto">Delete</button></div>`;
  });
- document.getElementById("ordersList").innerHTML=html||"No orders on this phone. Orders are saved only on THIS phone.";
+ document.getElementById("ordersList").innerHTML=html||"No orders on this phone.";
 }
 function delOrder(id){ if(confirm("Delete "+id+"?")){ orders=orders.filter(o=>{let no=normalizeOrder(o); return no.id!==id;}); saveOrders(); } }
-function fixOrders(){ orders=orders.map(o=>normalizeOrder(o)); saveOrders(); alert("Fixed "+orders.length+" orders!"); }
+function fixOrders(){ 
+ orders=orders.map(o=>{
+  let no=normalizeOrder(o);
+  let drv=drivers.find(x=>x.code===no.driverCode);
+  if(drv){no.driverName=drv.name;no.driverPhone=drv.phone;}
+  return no;
+ }); 
+ saveOrders(); 
+ alert("Fixed "+orders.length+" orders! Now driver phones added from My Drivers list!");
+}
 function generateCustomerLink(){ if(orders.length==0){alert("No orders");return;} let b=btoa(encodeURIComponent(JSON.stringify(orders))); let l="https://mmohlala322-maker.github.io/primemove/index.html?sync="+b; document.getElementById("linkBox").innerHTML="Customer Link:<br><a href='"+l+"' target='_blank'>"+l+"</a>"; prompt("Copy customer link:",l); }
 function sendToDriver(){
  if(orders.length==0){alert("No orders!");return;}
