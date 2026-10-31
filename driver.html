@@ -1,73 +1,128 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PrimeMove Driver</title>
 <style>
-body{font-family:Arial;background:#111;color:#fff;padding:10px}
-.card{background:#fff;color:#111;border-radius:12px;padding:15px;margin:10px 0}
-.btn{padding:10px 15px;border:none;border-radius:8px;font-weight:bold;cursor:pointer}
-.btn-gold{background:#FFD700;color:#111}
-.btn-black{background:#111;color:#FFD700}
-.status{padding:4px 8px;border-radius:10px;font-size:11px;font-weight:bold}
-.s-WAREHOUSE{background:#fff3cd}.s-OUT_FOR_DELIVERY{background:#cce5ff}.s-DELIVERED{background:#d4edda}
+body{font-family:Arial;background:#f4f6f8;margin:0;padding:10px}
+.card{background:white;padding:15px;border-radius:12px;margin-bottom:12px;box-shadow:0 2px 6px rgba(0,0,0,0.08)}
+input,button{width:100%;padding:12px;margin:6px 0;border-radius:8px;border:1px solid #ddd;box-sizing:border-box}
+button{background:#111;color:white;font-weight:bold;border:none}
+.yellow{background:#FFD700;color:#000}
+.blue{background:#0d6efd}
+.green{background:#198754}
+.order{border-left:4px solid #198754;padding:10px;margin-bottom:10px;background:#e8f5e9;border-radius:8px}
+.small{font-size:12px;color:#555}
 </style>
 </head>
 <body>
-<h2 style="color:#FFD700">🚚 PrimeMove Driver</h2>
-<p>Driver: <b id="drv">PM1001</b> | Parcels: <b id="count">0</b></p>
-<div id="list"></div>
+<h2>🚚 PrimeMove Driver App</h2>
+
+<div class="card" id="loginCard">
+<h3>Driver Login</h3>
+<input id="driverCode" placeholder="Enter Driver Code (e.g. PM1001)">
+<button onclick="login()" class="blue">LOGIN</button>
+<div id="loginMsg" class="small"></div>
+</div>
+
+<div class="card" id="ordersCard" style="display:none">
+<h3>My Deliveries (<span id="count">0</span>) - <span id="driverLabel"></span></h3>
+<button onclick="logout()" style="width:auto;padding:6px 12px;background:#666">Logout</button>
+<button onclick="clearAll()" style="width:auto;padding:6px 12px;background:red;margin-left:5px">Clear All</button>
+<div id="ordersList" style="margin-top:10px"></div>
+</div>
 
 <script>
-// SYNC FIX - THIS MAKES DRIVER SEE YOUR ORDERS
+let currentDriver = localStorage.getItem("pm_current_driver") || "";
 function getOrders(){
-  const params=new URLSearchParams(window.location.search);
-  const sync=params.get("sync");
-  if(sync){
-    try{
-      const json=decodeURIComponent(atob(sync));
-      const data=JSON.parse(json);
-      localStorage.setItem("pm_final",JSON.stringify(data));
-      alert("✅ Synced "+data.length+" parcels! Now saved on your phone.");
-      history.replaceState({},'',location.pathname+"?driver="+(params.get("driver")||"PM1001"));
-    }catch(e){ alert("Sync failed - ask admin to resend link"); }
-  }
-  return JSON.parse(localStorage.getItem("pm_final")||"[]");
+ try{ return JSON.parse(localStorage.getItem("pm_final")||"[]"); }catch(e){ return []; }
+}
+function saveOrders(arr){ localStorage.setItem("pm_final", JSON.stringify(arr)); render(); }
+
+function normalize(o){
+ return {
+  id: o.id || o.orderId || "PL"+Math.floor(Math.random()*1000000),
+  customerName: o.customerName || o.cName || o.name || "Customer",
+  customerPhone: o.customerPhone || o.cPhone || o.phone || "",
+  deliveryAddress: o.deliveryAddress || o.cAddress || o.address || "",
+  amount: o.amount || o.cAmount || "",
+  deliveryFee: o.deliveryFee || o.cFee || "",
+  driverCode: o.driverCode || o.cDriver || o.driver || "",
+  status: o.status || "Assigned",
+  createdAt: o.createdAt || new Date().toISOString()
+ };
 }
 
+// Check URL for sync
+(function handleSync(){
+ const params = new URLSearchParams(window.location.search);
+ const sync = params.get("sync");
+ const driverParam = params.get("driver");
+ if(driverParam){ document.getElementById("driverCode").value = driverParam; currentDriver = driverParam; localStorage.setItem("pm_current_driver", driverParam); }
+ if(sync){
+  try{
+   let json = decodeURIComponent(atob(sync));
+   let incoming = JSON.parse(decodeURIComponent(json));
+   if(!Array.isArray(incoming)) incoming=[incoming];
+   incoming = incoming.map(o=>normalize(o));
+   let existing = getOrders();
+   // merge - avoid duplicates by id
+   incoming.forEach(ni=>{
+    if(!existing.find(e=> (e.id||e.orderId)===ni.id )){ existing.unshift(ni); }
+   });
+   saveOrders(existing);
+   if(incoming.length>0 && driverParam){
+    currentDriver = driverParam;
+    localStorage.setItem("pm_current_driver", driverParam);
+    alert("✅ Synced "+incoming.length+" parcels for "+driverParam+"! Now saved on your phone.");
+    window.history.replaceState({}, document.title, window.location.pathname+"?driver="+driverParam);
+   } else if(incoming.length>0){
+    alert("✅ Synced "+incoming.length+" parcels! Now saved on your phone. Enter your driver code to login.");
+   }
+  }catch(e){ alert("Sync failed: "+e.message); }
+ }
+})();
+
+function login(){
+ let code = document.getElementById("driverCode").value.trim().toUpperCase();
+ if(!code){ alert("Enter driver code"); return; }
+ currentDriver = code;
+ localStorage.setItem("pm_current_driver", code);
+ document.getElementById("loginMsg").textContent = "Logged in as "+code;
+ showOrders();
+}
+function logout(){ localStorage.removeItem("pm_current_driver"); currentDriver=""; document.getElementById("loginCard").style.display="block"; document.getElementById("ordersCard").style.display="none"; document.getElementById("driverCode").value=""; }
+function showOrders(){
+ if(!currentDriver) return;
+ document.getElementById("loginCard").style.display="none";
+ document.getElementById("ordersCard").style.display="block";
+ document.getElementById("driverLabel").textContent = currentDriver;
+ render();
+}
 function render(){
-  const params=new URLSearchParams(window.location.search);
-  const driverCode=params.get("driver")||"PM1001";
-  document.getElementById("drv").innerText=driverCode;
-  let orders=getOrders();
-  let myOrders=orders.filter(o=>o.dc===driverCode);
-  document.getElementById("count").innerText=myOrders.length;
-  const list=document.getElementById("list");
-  if(myOrders.length===0){
-    list.innerHTML="<div class='card'>No parcels yet.<br><br>Ask admin to send you SYNC LINK.<br>Open this link: primemove/sync.html on admin phone</div>";
-    return;
-  }
-  list.innerHTML=myOrders.map(o=>`
-    <div class="card">
-      <b>${o.id}</b> <span class="status s-${o.s}">${o.s}</span><br>
-      Customer: ${o.n}<br>
-      Address: ${o.a}<br>
-      Phone: ${o.cp}<br>
-      <button class="btn btn-gold" onclick="updateStatus('${o.id}','OUT_FOR_DELIVERY')">Out for Delivery</button>
-      <button class="btn btn-black" onclick="updateStatus('${o.id}','DELIVERED')">Delivered</button>
-    </div>
-  `).join("");
+ let all = getOrders().map(o=>normalize(o));
+ let mine = all.filter(o=> o.driverCode.toUpperCase()===currentDriver.toUpperCase() );
+ document.getElementById("count").textContent = mine.length;
+ let html="";
+ mine.forEach(o=>{
+  html+=`<div class="order"><b>${o.id}</b> - ${o.customerName}<br><span class="small">📞 ${o.customerPhone}<br>📍 ${o.deliveryAddress}<br>💰 R${o.amount} + R${o.deliveryFee} fee<br>Status: ${o.status}</span><br>
+  <button onclick="updateStatus('${o.id}','Picked Up')" style="background:#ff9800;margin-top:6px">Picked Up</button>
+  <button onclick="updateStatus('${o.id}','Delivered')" style="background:#198754;margin-top:6px">Delivered ✅</button>
+  <a href="https://wa.me/${o.customerPhone.replace(/[^0-9]/g,'')}?text=Hi ${o.customerName}, I'm your PrimeMove driver ${currentDriver} on the way with ${o.id}" target="_blank" style="display:block;text-align:center;background:#25D366;color:white;padding:10px;border-radius:8px;margin-top:6px;text-decoration:none">WhatsApp Customer</a>
+  </div>`;
+ });
+ document.getElementById("ordersList").innerHTML = html || "<div class='small'>No parcels yet for "+currentDriver+". Ask admin to SEND TO DRIVER sync link.</div>";
 }
-
 function updateStatus(id,newStatus){
-  let orders=JSON.parse(localStorage.getItem("pm_final")||"[]");
-  orders=orders.map(o=> o.id===id ? {...o,s:newStatus} : o);
-  localStorage.setItem("pm_final",JSON.stringify(orders));
-  render();
+ let all = getOrders().map(o=>normalize(o));
+ let idx = all.findIndex(o=>o.id===id);
+ if(idx>=0){ all[idx].status=newStatus; saveOrders(all); }
 }
+function clearAll(){ if(confirm("Clear all parcels from this phone?")){ localStorage.removeItem("pm_final"); render(); } }
 
-render();
+// Auto login if driver saved
+if(currentDriver){ document.getElementById("driverCode").value=currentDriver; showOrders(); }
 </script>
 </body>
 </html>
