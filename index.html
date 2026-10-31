@@ -2,75 +2,122 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PRIME MOVE ADMIN - FINAL</title>
+<title>PRIME MOVE - TRACK YOUR PARCEL</title>
 <style>
-body{font-family:Arial;background:#f5f5f5;margin:0;padding:12px}
-.card{background:#fff;border-radius:15px;padding:18px;max-width:500px;margin:auto;box-shadow:0 4px 12px rgba(0,0,0,.1)}
-h1{text-align:center;font-size:20px}label{font-weight:bold;font-size:11px;display:block;margin:10px 0 4px}
-input,select{width:100%;padding:11px;border:1px solid #ddd;border-radius:8px;box-sizing:border-box;font-size:13px}
-.btn{width:100%;padding:12px;border:none;border-radius:8px;font-weight:bold;font-size:13px;margin-top:10px;cursor:pointer}
-.btn-black{background:#111;color:#FFD700}.btn-green{background:#25D366;color:#fff}.btn-red{background:#ff3b30;color:#fff;padding:6px 10px;width:auto;font-size:11px;margin:5px 3px}
-.linkbox{background:#f9f9f9;border:1px dashed #999;padding:10px;border-radius:8px;word-break:break-all;font-size:11px;margin-top:8px;min-height:30px}
-.order{background:#fafafa;border:1px solid #eee;border-radius:10px;padding:10px;margin-top:10px;font-size:12px}
-.small{font-size:10px;color:#666}
+body{font-family:Arial;background:#f5f5f5;margin:0;padding:15px}
+.card{background:#fff;border-radius:16px;padding:20px;max-width:480px;margin:20px auto;box-shadow:0 4px 20px rgba(0,0,0,.1);text-align:center}
+.logo{font-size:24px;font-weight:bold;margin:0}
+.logo span{color:#FFD700;background:#111;padding:2px 8px;border-radius:6px}
+.input{width:100%;padding:14px;margin:10px 0;border:2px solid #ddd;border-radius:10px;box-sizing:border-box;font-size:16px}
+.btn{width:100%;padding:14px;border:none;border-radius:10px;font-weight:bold;font-size:16px;cursor:pointer;margin-top:8px}
+.btn-black{background:#111;color:#FFD700}.btn-green{background:#00c853;color:#fff}
+.status{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:bold;display:inline-block;margin:8px 0}
+.WAREHOUSE{background:#111;color:#FFD700}.DISPATCHED{background:#FF9500;color:#fff}.ON\ THE\ WAY{background:#007AFF;color:#fff}.DELIVERED{background:#00c853;color:#fff}.FAILED{background:#ff3b30;color:#fff}
+.info{border:1px solid #eee;padding:12px;border-radius:10px;margin:10px 0;text-align:left;font-size:14px;background:#fafafa}
+.info b{display:inline-block;width:90px}
+.timeline{border-left:3px solid #FFD700;margin:15px 0 15px 10px;padding-left:15px;text-align:left}
+.timeline div{margin:10px 0;position:relative}
+.timeline div::before{content:"●";color:#FFD700;position:absolute;left:-22px;font-size:18px}
 </style>
 </head>
 <body>
 <div class="card">
-<h1>PRIME MOVE ADMIN</h1>
-<label>NAME AND SURNAME</label><input id="name" placeholder="Mpho Sono">
-<label>TELEPHONE NUMBER</label><input id="phone" placeholder="0834936558">
-<label>ADDRESS</label><input id="address" placeholder="7704 Motanyane Street">
-<label>PARCEL STATUS</label>
-<select id="status"><option>WAREHOUSE</option><option>DISPATCHED</option><option>ON THE WAY</option><option>DELIVERED</option><option>FAILED</option></select>
-<label>ASSIGN DRIVER (7 drivers)</label>
-<select id="driver">
-<option value="Sphumelele Motaung|+27828618192|PM1001">Sphumelele Motaung - 0828618192 - PM1001</option>
-<option value="Thabo Ndlovu|+27821234567|PM1002">Thabo Ndlovu - 0821234567 - PM1002</option>
-<option value="Lerato Khumalo|+27829876543|PM1003">Lerato Khumalo - 0829876543 - PM1003</option>
-<option value="Bongani Zulu|+27831112222|PM1004">Bongani Zulu - 0831112222 - PM1004</option>
-<option value="Noluthando Dlamini|+27834445555|PM1005">Noluthando Dlamini - 0834445555 - PM1005</option>
-<option value="Sipho Mahlangu|+27836667777|PM1006">Sipho Mahlangu - 0836667777 - PM1006</option>
-<option value="Precious Molefe|+27838889999|PM1007">Precious Molefe - 0838889999 - PM1007</option>
-</select>
-<button class="btn btn-black" onclick="generate()">GENERATE CUSTOMER LINK</button>
-<div id="linkBox" class="linkbox">Link will appear here...</div>
-<button class="btn btn-green" onclick="copyLink()">📲 COPY LINK & WHATSAPP CUSTOMER</button>
-<hr><h3>📋 ALL ORDERS (<span id="cnt">0</span>)</h3><div id="list"></div>
+<p class="logo">PRIME <span>MOVE</span></p>
+<p style="font-size:12px;color:#666;margin:0 0 15px">TRACK YOUR PARCEL - FAST & SAFE</p>
+
+<div id="inputBox">
+<input class="input" id="trackInput" placeholder="Enter Tracking Code e.g. PL123456">
+<button class="btn btn-black" onclick="trackParcel()">🔍 TRACK MY PARCEL</button>
+<p style="font-size:11px;color:#888;margin-top:10px">Your tracking code was sent on WhatsApp</p>
 </div>
+
+<div id="resultBox" style="display:none">
+<h2 id="cName" style="margin:5px 0"></h2>
+<p id="cCode" style="font-size:11px;color:#888;margin:0"></p>
+<div id="cStatus" class="status"></div>
+
+<div class="info">
+<b>Name:</b> <span id="rName"></span><br>
+<b>Phone:</b> <span id="rPhone"></span><br>
+<b>Address:</b> <span id="rAddr"></span><br>
+</div>
+
+<div class="info" style="background:#FFF9C4">
+<b>Driver:</b> <span id="rDriver"></span><br>
+<b>Driver Phone:</b> <a id="rDriverPhone" href="#"></a><br>
+<b>Driver Code:</b> <span id="rDriverCode"></span><br>
+</div>
+
+<div class="timeline">
+<div><b id="tStatus">WAREHOUSE</b><br><small id="tDate"></small></div>
+<div><b>Order Received</b><br><small>Parcel registered at warehouse</small></div>
+</div>
+
+<button class="btn btn-green" onclick="shareWhatsApp()">💬 Share on WhatsApp</button>
+<button class="btn btn-black" onclick="showInput()">🔍 Track Another Parcel</button>
+</div>
+</div>
+
 <script>
-const BASE="https://mmohlala322-maker.github.io/";
-function getOrders(){return JSON.parse(localStorage.getItem("pm_final")||"[]")}
-function save(o){localStorage.setItem("pm_final",JSON.stringify(o))}
-let counter=parseInt(localStorage.getItem("pm_counter")||"1000");
-function generate(){
- const n=document.getElementById("name").value.trim(), cp=document.getElementById("phone").value.trim(), a=document.getElementById("address").value.trim(), s=document.getElementById("status").value, d=document.getElementById("driver").value;
- if(!n||!cp||!a){alert("Fill Name, Phone, Address");return}
- const [dn,dp,dc]=d.split("|"); counter++; localStorage.setItem("pm_counter",counter);
- const code="PL"+counter;
- const order={code,n,cp,a,s,dn,dp,dc,date:new Date().toLocaleString()};
- const orders=getOrders(); orders.unshift(order); save(orders);
- const link=`${BASE}?track=${code}&n=${encodeURIComponent(n)}&cp=${encodeURIComponent(cp)}&a=${encodeURIComponent(a)}&s=${encodeURIComponent(s)}&dn=${encodeURIComponent(dn)}&dp=${encodeURIComponent(dp)}&dc=${encodeURIComponent(dc)}`;
- document.getElementById("linkBox").innerText=link; document.getElementById("linkBox").dataset.link=link;
- render(); alert("✅ "+code+" Created! Link ready - works on ANY phone, no credits!");
- document.getElementById("name").value="";document.getElementById("phone").value="";document.getElementById("address").value="";
+const params=new URLSearchParams(window.location.search);
+function fillFromURL(){
+  const track=params.get("track");
+  if(!track) return false;
+  document.getElementById("inputBox").style.display="none";
+  document.getElementById("resultBox").style.display="block";
+  const n=params.get("n")||"Customer";
+  const cp=params.get("cp")||"";
+  const a=params.get("a")||"";
+  const s=params.get("s")||"WAREHOUSE";
+  const dn=params.get("dn")||"";
+  const dp=params.get("dp")||"";
+  const dc=params.get("dc")||"";
+  
+  document.getElementById("cName").innerText=n;
+  document.getElementById("cCode").innerText="Tracking: "+track;
+  document.getElementById("cStatus").innerText=s;
+  document.getElementById("cStatus").className="status "+s;
+  document.getElementById("tStatus").innerText=s;
+  document.getElementById("tDate").innerText=new Date().toLocaleString();
+  
+  document.getElementById("rName").innerText=n;
+  document.getElementById("rPhone").innerText=cp;
+  document.getElementById("rAddr").innerText=a;
+  document.getElementById("rDriver").innerText=dn;
+  document.getElementById("rDriverPhone").innerText=dp;
+  document.getElementById("rDriverPhone").href="tel:"+dp;
+  document.getElementById("rDriverCode").innerText=dc;
+  return true;
 }
-function render(){
- const orders=getOrders(); document.getElementById("cnt").innerText=orders.length;
- const list=document.getElementById("list"); list.innerHTML="";
- orders.forEach((o,i)=>{
-  const div=document.createElement("div"); div.className="order";
-  div.innerHTML=`<b>${o.code} - ${o.n}</b><br><span class="small">${o.cp} | ${o.a}<br>📦 ${o.s} | 🚚 ${o.dn} - ${o.dp} - ${o.dc}<br>${o.date}</span><br>
-  <a href="${BASE}?track=${o.code}&n=${encodeURIComponent(o.n)}&cp=${encodeURIComponent(o.cp)}&a=${encodeURIComponent(o.a)}&s=${encodeURIComponent(o.s)}&dn=${encodeURIComponent(o.dn)}&dp=${encodeURIComponent(o.dp)}&dc=${encodeURIComponent(o.dc)}" target="_blank" style="font-size:10px">🔗 TRACK LINK</a><br>
-  <button class="btn-red" onclick="whatsAppCust('${o.cp}','${o.code}','${o.n}')">WhatsApp Cust</button>
-  <button class="btn-red" onclick="delOrder(${i})">DELETE</button>`;
-  list.appendChild(div);
- });
+
+function trackParcel(){
+  const code=document.getElementById("trackInput").value.trim().toUpperCase();
+  if(!code){alert("Enter tracking code");return}
+  // try find in localStorage
+  const orders=JSON.parse(localStorage.getItem("pm_final")||"[]");
+  const found=orders.find(o=>o.code.toUpperCase()===code);
+  if(found){
+    const url=`?track=${found.code}&n=${encodeURIComponent(found.n)}&cp=${encodeURIComponent(found.cp)}&a=${encodeURIComponent(found.a)}&s=${encodeURIComponent(found.s)}&dn=${encodeURIComponent(found.dn)}&dp=${encodeURIComponent(found.dp)}&dc=${encodeURIComponent(found.dc)}`;
+    window.location.href=url;
+  }else{
+    alert("Parcel not found on this device. Open the link sent on WhatsApp. Code: "+code);
+  }
 }
-function delOrder(i){if(confirm("Delete this order?")){const o=getOrders();o.splice(i,1);save(o);render()}}
-function copyLink(){const l=document.getElementById("linkBox").dataset.link||document.getElementById("linkBox").innerText; if(!l||l.includes("Link will")){alert("Generate first");return} navigator.clipboard.writeText(l).then(()=>{const phone=document.getElementById("phone").value||""; if(phone){window.open(`https://wa.me/${phone.replace(/[^0-9]/g,"")}?text=${encodeURIComponent("Your Prime Move Parcel: "+l)}`)}else{alert("Copied: "+l)}})}
-function whatsAppCust(cp,code,name){const orders=getOrders();const o=orders.find(x=>x.code===code)||orders[0];const link=`${BASE}?track=${code}&n=${encodeURIComponent(name)}&cp=${encodeURIComponent(cp)}`; window.open(`https://wa.me/${cp.replace(/[^0-9]/g,"")}?text=${encodeURIComponent("Hi "+name+" Your parcel "+code+" : "+link)}`)}
-render();
+
+function shareWhatsApp(){
+  const text=`My parcel ${params.get("track")} - ${params.get("s")} - Track: ${window.location.href}`;
+  window.open(`https://wa.me/?text=${encodeURIComponent(text)}`,"_blank");
+}
+
+function showInput(){
+  document.getElementById("inputBox").style.display="block";
+  document.getElementById("resultBox").style.display="none";
+  window.history.replaceState({},'',window.location.pathname);
+}
+
+if(!fillFromURL()){
+  document.getElementById("inputBox").style.display="block";
+}
 </script>
 </body>
- </html>
+</html>
