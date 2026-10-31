@@ -1,15 +1,35 @@
-<button onclick="sendToDriver()" style="width:100%;padding:12px;margin-top:10px;background:#FFD700;color:#000;border:none;border-radius:8px;font-weight:bold;font-size:14px;">📤 SEND TO DRIVER - SYNC ORDERS</button>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PrimeMove Admin Fixed</title>
+<style>body{font-family:Arial;background:#f5f5f5;margin:0;padding:10px}.card{background:white;padding:12px;border-radius:10px;margin-bottom:10px}input,select,button{width:100%;padding:12px;margin:5px 0;border-radius:8px;border:1px solid #ddd}button{background:#111;color:white;font-weight:bold;border:none}button.yellow{background:#FFD700;color:#000}button.blue{background:#0d6efd}.order{border-left:4px solid #FFD700;padding-left:10px;margin-bottom:10px}</style>
+</head>
+<body>
+<h2>🚚 PrimeMove Admin</h2>
+<div class="card">
+<input id="cName" placeholder="Customer Name">
+<input id="cPhone" placeholder="Customer Phone">
+<input id="cAddress" placeholder="Delivery Address">
+<input id="cAmount" placeholder="Amount">
+<input id="cFee" placeholder="Delivery Fee">
+<select id="cDriver"><option>PM1001</option><option>PM1002</option><option>PM1003</option><option>PM1004</option></select>
+<button onclick="createOrder()">CREATE ORDER</button>
+<button onclick="generateCustomerLink()" style="background:#0d6efd;color:white">🔗 GENERATE CUSTOMER LINK</button>
+<button onclick="sendToDriver()" style="background:#FFD700;color:#000">📤 SEND TO DRIVER - SYNC ORDERS</button>
+<div id="linkBox" style="word-break:break-all;margin-top:10px;font-size:12px"></div>
+</div>
+<div class="card"><h3>Orders (<span id="count">0</span>)</h3><div id="ordersList"></div></div>
 <script>
-function sendToDriver(){
-  let orders=JSON.parse(localStorage.getItem("pm_final")||"[]");
-  if(orders.length==0){alert("No orders on this phone!");return;}
-  let code=prompt("Driver code?","PM1001")||"PM1001";
-  let b64=btoa(encodeURIComponent(JSON.stringify(orders)));
-  let link="https://mmohlala322-maker.github.io/primemove/driver.html?driver="+code+"&sync="+b64;
-  if(confirm("Send "+orders.length+" parcels to "+code+"?")){
-    window.open("https://wa.me/?text="+encodeURIComponent("🚚 Click for your parcels: "+link),"_blank");
-  }else{
-    prompt("Copy link:",link);
-  }
-}
+let orders=JSON.parse(localStorage.getItem("pm_final")||"[]");
+function save(){localStorage.setItem("pm_final",JSON.stringify(orders));render();}
+function createOrder(){let n=cName.value.trim(),p=cPhone.value.trim(),a=cAddress.value.trim(),am=cAmount.value.trim(),f=cFee.value.trim(),d=cDriver.value;if(!n||!p){alert("Fill name & phone");return;}let id="PL"+Math.floor(100000+Math.random()*900000);orders.unshift({id:id,customerName:n,customerPhone:p,deliveryAddress:a,amount:am,deliveryFee:f,driverCode:d,status:"Assigned",createdAt:new Date().toISOString()});save();cName.value="";cPhone.value="";cAddress.value="";cAmount.value="";cFee.value="";alert("Created "+id);}
+function render(){count.textContent=orders.length;let h="";orders.forEach(o=>{h+=`<div class="order card"><b>${o.id}</b> - ${o.customerName}<br><small>${o.deliveryAddress} | R${o.amount} | Driver: ${o.driverCode}</small><br><button onclick="delOrder('${o.id}')" style="background:red;padding:5px;margin-top:5px">Delete</button></div>`});ordersList.innerHTML=h||"No orders on this phone.";}
+function delOrder(id){if(confirm("Delete "+id+"?")){orders=orders.filter(o=>o.id!==id);save();}}
+function generateCustomerLink(){if(orders.length==0){alert("No orders");return;}let b=btoa(encodeURIComponent(JSON.stringify(orders)));let l="https://mmohlala322-maker.github.io/primemove/index.html?sync="+b;linkBox.innerHTML="Customer Link:<br><a href='"+l+"'>"+l+"</a>";prompt("Copy customer link:",l);}
+function sendToDriver(){if(orders.length==0){alert("No orders!");return;}let code=prompt("Driver code?","PM1001")||"PM1001";let b=btoa(encodeURIComponent(JSON.stringify(orders)));let l="https://mmohlala322-maker.github.io/primemove/driver.html?driver="+code+"&sync="+b;if(confirm("Send "+orders.length+" parcels to "+code+"?")){window.open("https://wa.me/?text="+encodeURIComponent("🚚 Click for your parcels: "+l),"_blank");}else{linkBox.innerHTML="Driver Link:<br><a href='"+l+"'>"+l+"</a>";prompt("Copy link:",l);}}
+render();
 </script>
+</body>
+</html>
