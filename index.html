@@ -1,122 +1,112 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PRIME MOVE - TRACK YOUR PARCEL</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PrimeMove - Track Parcel</title>
 <style>
-body{font-family:Arial;background:#f5f5f5;margin:0;padding:15px}
-.card{background:#fff;border-radius:16px;padding:20px;max-width:480px;margin:20px auto;box-shadow:0 4px 20px rgba(0,0,0,.1);text-align:center}
-.logo{font-size:24px;font-weight:bold;margin:0}
-.logo span{color:#FFD700;background:#111;padding:2px 8px;border-radius:6px}
-.input{width:100%;padding:14px;margin:10px 0;border:2px solid #ddd;border-radius:10px;box-sizing:border-box;font-size:16px}
-.btn{width:100%;padding:14px;border:none;border-radius:10px;font-weight:bold;font-size:16px;cursor:pointer;margin-top:8px}
-.btn-black{background:#111;color:#FFD700}.btn-green{background:#00c853;color:#fff}
-.status{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:bold;display:inline-block;margin:8px 0}
-.WAREHOUSE{background:#111;color:#FFD700}.DISPATCHED{background:#FF9500;color:#fff}.ON\ THE\ WAY{background:#007AFF;color:#fff}.DELIVERED{background:#00c853;color:#fff}.FAILED{background:#ff3b30;color:#fff}
-.info{border:1px solid #eee;padding:12px;border-radius:10px;margin:10px 0;text-align:left;font-size:14px;background:#fafafa}
-.info b{display:inline-block;width:90px}
-.timeline{border-left:3px solid #FFD700;margin:15px 0 15px 10px;padding-left:15px;text-align:left}
-.timeline div{margin:10px 0;position:relative}
-.timeline div::before{content:"●";color:#FFD700;position:absolute;left:-22px;font-size:18px}
+body{font-family:Arial;background:#f4f6f8;margin:0;padding:10px}
+.card{background:white;padding:15px;border-radius:12px;margin-bottom:12px;box-shadow:0 2px 6px rgba(0,0,0,0.08)}
+input,button{width:100%;padding:14px;margin:6px 0;border-radius:10px;border:1px solid #ddd;box-sizing:border-box}
+button{background:#111;color:white;font-weight:bold;border:none;font-size:16px}
+.yellow{background:#FFD700;color:#000}
+.blue{background:#0d6efd}
+.order{border-left:5px solid #FFD700;padding:12px;margin-bottom:12px;background:#fffbe6;border-radius:10px}
+.status{padding:6px 12px;border-radius:20px;font-size:12px;font-weight:bold;display:inline-block;margin-top:6px}
+.s-assigned{background:#ffe082}
+.s-picked{background:#ffcc80}
+.s-delivered{background:#a5d6a7}
+.small{font-size:12px;color:#666}
+h2{text-align:center}
+.logo{text-align:center;font-size:28px;margin:10px}
 </style>
 </head>
 <body>
+<div class="logo">🚚 PrimeMove</div>
+<h2>Track Your Parcel</h2>
+
 <div class="card">
-<p class="logo">PRIME <span>MOVE</span></p>
-<p style="font-size:12px;color:#666;margin:0 0 15px">TRACK YOUR PARCEL - FAST & SAFE</p>
-
-<div id="inputBox">
-<input class="input" id="trackInput" placeholder="Enter Tracking Code e.g. PL123456">
-<button class="btn btn-black" onclick="trackParcel()">🔍 TRACK MY PARCEL</button>
-<p style="font-size:11px;color:#888;margin-top:10px">Your tracking code was sent on WhatsApp</p>
+<input id="trackInput" placeholder="Enter Parcel ID (e.g. PL123456)">
+<button onclick="track()" class="blue">🔍 TRACK PARCEL</button>
+<button onclick="loadAll()" style="background:#666">Show All Parcels On This Phone</button>
+<div id="result" style="margin-top:15px"></div>
 </div>
 
-<div id="resultBox" style="display:none">
-<h2 id="cName" style="margin:5px 0"></h2>
-<p id="cCode" style="font-size:11px;color:#888;margin:0"></p>
-<div id="cStatus" class="status"></div>
-
-<div class="info">
-<b>Name:</b> <span id="rName"></span><br>
-<b>Phone:</b> <span id="rPhone"></span><br>
-<b>Address:</b> <span id="rAddr"></span><br>
-</div>
-
-<div class="info" style="background:#FFF9C4">
-<b>Driver:</b> <span id="rDriver"></span><br>
-<b>Driver Phone:</b> <a id="rDriverPhone" href="#"></a><br>
-<b>Driver Code:</b> <span id="rDriverCode"></span><br>
-</div>
-
-<div class="timeline">
-<div><b id="tStatus">WAREHOUSE</b><br><small id="tDate"></small></div>
-<div><b>Order Received</b><br><small>Parcel registered at warehouse</small></div>
-</div>
-
-<button class="btn btn-green" onclick="shareWhatsApp()">💬 Share on WhatsApp</button>
-<button class="btn btn-black" onclick="showInput()">🔍 Track Another Parcel</button>
-</div>
+<div class="card">
+<h3>How to track?</h3>
+<p class="small">Enter your PL code sent by PrimeMove on WhatsApp.<br><br>Example: PL123456<br><br>If you clicked a link from admin, your parcels are saved on THIS phone automatically.</p>
+<div id="infoBox" class="small"></div>
 </div>
 
 <script>
-const params=new URLSearchParams(window.location.search);
-function fillFromURL(){
-  const track=params.get("track");
-  if(!track) return false;
-  document.getElementById("inputBox").style.display="none";
-  document.getElementById("resultBox").style.display="block";
-  const n=params.get("n")||"Customer";
-  const cp=params.get("cp")||"";
-  const a=params.get("a")||"";
-  const s=params.get("s")||"WAREHOUSE";
-  const dn=params.get("dn")||"";
-  const dp=params.get("dp")||"";
-  const dc=params.get("dc")||"";
-  
-  document.getElementById("cName").innerText=n;
-  document.getElementById("cCode").innerText="Tracking: "+track;
-  document.getElementById("cStatus").innerText=s;
-  document.getElementById("cStatus").className="status "+s;
-  document.getElementById("tStatus").innerText=s;
-  document.getElementById("tDate").innerText=new Date().toLocaleString();
-  
-  document.getElementById("rName").innerText=n;
-  document.getElementById("rPhone").innerText=cp;
-  document.getElementById("rAddr").innerText=a;
-  document.getElementById("rDriver").innerText=dn;
-  document.getElementById("rDriverPhone").innerText=dp;
-  document.getElementById("rDriverPhone").href="tel:"+dp;
-  document.getElementById("rDriverCode").innerText=dc;
-  return true;
+function getOrders(){
+ try{
+  let raw = localStorage.getItem("pm_final") || localStorage.getItem("pm_orders") || "[]";
+  let arr = JSON.parse(raw);
+  if(!Array.isArray(arr)) return [];
+  return arr.map(o=>({
+   id: o.id || o.orderId || "",
+   customerName: o.customerName || o.cName || o.name || "",
+   customerPhone: o.customerPhone || o.cPhone || o.phone || "",
+   deliveryAddress: o.deliveryAddress || o.cAddress || o.address || "",
+   amount: o.amount || o.cAmount || "",
+   deliveryFee: o.deliveryFee || o.cFee || "",
+   driverCode: o.driverCode || o.cDriver || o.driver || "",
+   status: o.status || "Assigned",
+   createdAt: o.createdAt || ""
+  }));
+ }catch(e){ return []; }
 }
+function saveOrders(arr){ localStorage.setItem("pm_final", JSON.stringify(arr)); }
 
-function trackParcel(){
-  const code=document.getElementById("trackInput").value.trim().toUpperCase();
-  if(!code){alert("Enter tracking code");return}
-  // try find in localStorage
-  const orders=JSON.parse(localStorage.getItem("pm_final")||"[]");
-  const found=orders.find(o=>o.code.toUpperCase()===code);
-  if(found){
-    const url=`?track=${found.code}&n=${encodeURIComponent(found.n)}&cp=${encodeURIComponent(found.cp)}&a=${encodeURIComponent(found.a)}&s=${encodeURIComponent(found.s)}&dn=${encodeURIComponent(found.dn)}&dp=${encodeURIComponent(found.dp)}&dc=${encodeURIComponent(found.dc)}`;
-    window.location.href=url;
-  }else{
-    alert("Parcel not found on this device. Open the link sent on WhatsApp. Code: "+code);
-  }
+// Handle sync link from admin
+(function handleSync(){
+ const p = new URLSearchParams(window.location.search);
+ const sync = p.get("sync");
+ const track = p.get("track");
+ if(sync){
+  try{
+   let json = decodeURIComponent(atob(sync));
+   let incoming = JSON.parse(decodeURIComponent(json));
+   if(!Array.isArray(incoming)) incoming=[incoming];
+   let existing = getOrders();
+   let added=0;
+   incoming.forEach(ni=>{
+    let nid = ni.id || ni.orderId;
+    if(!existing.find(e=>e.id===nid)){ existing.unshift(ni); added++; }
+   });
+   saveOrders(existing);
+   document.getElementById("infoBox").innerHTML = "✅ Synced "+incoming.length+" parcels! Saved on this phone. Now enter PL code to track.";
+   if(track){ document.getElementById("trackInput").value=track; setTimeout(()=>trackCode(track), 500); }
+  }catch(e){ console.log(e); }
+ }
+ if(track && !sync){ document.getElementById("trackInput").value=track; setTimeout(()=>trackCode(track), 500); }
+})();
+
+function track(){ let code = document.getElementById("trackInput").value.trim().toUpperCase(); trackCode(code); }
+function trackCode(code){
+ if(!code){ alert("Enter PL code"); return; }
+ let orders = getOrders();
+ let o = orders.find(x=> x.id.toUpperCase()===code.toUpperCase());
+ let box = document.getElementById("result");
+ if(!o){
+  box.innerHTML = `<div class="order" style="border-left-color:red;background:#ffebee"><b>❌ Not found: ${code}</b><br><span class="small">This phone has ${orders.length} parcels saved. Make sure you opened the sync link from admin on THIS phone.<br><br>Saved IDs: ${orders.map(x=>x.id).join(", ") || "none"}</span></div>`;
+  return;
+ }
+ let statusClass = o.status.toLowerCase().includes("deliver") ? "s-delivered" : o.status.toLowerCase().includes("pick") ? "s-picked" : "s-assigned";
+ let date = o.createdAt ? new Date(o.createdAt).toLocaleString() : "";
+ box.innerHTML = `<div class="order"><b>📦 ${o.id}</b><br><span class="small">Customer: ${o.customerName}<br>Address: ${o.deliveryAddress}<br>Amount: R${o.amount} + R${o.deliveryFee} delivery<br>Driver: ${o.driverCode}<br>Date: ${date}</span><br><span class="status ${statusClass}">${o.status.toUpperCase()}</span><br><br><div style="background:white;padding:10px;border-radius:8px"><b>Tracking Timeline:</b><br>✅ Order Created<br>${o.status!=="Assigned" ? "✅ Picked Up by "+o.driverCode+"<br>" : "⏳ Waiting for Pickup<br>"}${o.status==="Delivered" ? "✅ Delivered!<br>" : "⏳ Out for Delivery"}</div></div>`;
 }
-
-function shareWhatsApp(){
-  const text=`My parcel ${params.get("track")} - ${params.get("s")} - Track: ${window.location.href}`;
-  window.open(`https://wa.me/?text=${encodeURIComponent(text)}`,"_blank");
-}
-
-function showInput(){
-  document.getElementById("inputBox").style.display="block";
-  document.getElementById("resultBox").style.display="none";
-  window.history.replaceState({},'',window.location.pathname);
-}
-
-if(!fillFromURL()){
-  document.getElementById("inputBox").style.display="block";
+function loadAll(){
+ let orders = getOrders();
+ let box = document.getElementById("result");
+ if(orders.length==0){ box.innerHTML="No parcels saved on this phone. Open admin sync link first."; return; }
+ let html="<h3>All Parcels On This Phone ("+orders.length+")</h3>";
+ orders.forEach(o=>{
+  let sc = o.status.toLowerCase().includes("deliver") ? "s-delivered" : o.status.toLowerCase().includes("pick") ? "s-picked" : "s-assigned";
+  html+=`<div class="order"><b>${o.id}</b> - ${o.customerName}<br><span class="small">${o.deliveryAddress} | R${o.amount} | ${o.driverCode}</span><br><span class="status ${sc}">${o.status}</span> <button onclick="document.getElementById('trackInput').value='${o.id}';track()" style="width:auto;padding:5px 10px;margin-left:5px">Track</button></div>`;
+ });
+ box.innerHTML=html;
 }
 </script>
 </body>
