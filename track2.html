@@ -1,0 +1,15 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>PrimeMove</title>
+<style>body{font-family:Arial;background:#f8fafc;margin:0}.h{background:#111;color:#fff;padding:20px;text-align:center;font-size:24px;font-weight:bold}.s{background:#fff;margin:14px;padding:18px;border-radius:12px}input{width:100%;padding:14px;border-radius:8px;border:2px solid #ddd;box-sizing:border-box}button{width:100%;padding:14px;border-radius:8px;border:none;background:#111;color:#fff;font-weight:bold;margin-top:10px}.card{background:#fff;margin:14px;padding:18px;border-radius:12px}</style></head><body>
+<div class=h>PrimeMove</div>
+<div class=s><input id=i placeholder="Enter PL code"><button onclick="t()">TRACK</button></div>
+<div id=r></div>
+<script>
+function t(){
+let c=document.getElementById('i').value.toUpperCase().trim();
+let data={"PL999580":{customer:"Pabi Moloi - 0834936558",address:"7704 Motanyane Street",driver:"Sphumelele Motaung - 0828618192",code:"SPHUMELELE1",status:"Assigned"}};
+let o=data[c];
+if(!o){document.getElementById('r').innerHTML=`<div class=card>❌ ${c} not found</div>`;return}
+document.getElementById('r').innerHTML=`<div class=card><b>${c}</b> - ${o.status}<br><br>Customer: ${o.customer}<br>📍 ${o.address}<br><br>Driver: ${o.driver}<br>Code: ${o.code}<br><br><a href="tel:0828618192"><button>📞 CALL</button></a></div>`;
+}
+let p=new URL(location.href).searchParams.get('track');if(p){document.getElementById('i').value=p;setTimeout(t,500)}
+</script></body></html>
