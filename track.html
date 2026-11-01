@@ -1,49 +1,45 @@
-<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>PrimeMove</title>
-<style>*{box-sizing:border-box}body{margin:0;font-family:-apple-system,Arial;background:#f2f4f8}
-.header{background:#111;color:#fff;padding:22px;text-align:center}.wrap{max-width:480px;margin:0 auto;padding:0 14px 30px}
-.searchCard{background:#fff;margin-top:-14px;padding:18px;border-radius:20px;box-shadow:0 8px 30px rgba(0,0,0,.08)}
-.searchCard input{width:100%;padding:16px;border-radius:14px;border:2px solid #e5e7eb;font-size:16px}
-.searchCard button{width:100%;padding:16px;border-radius:14px;border:none;background:#111;color:#fff;font-weight:800;margin-top:12px}
-.card{background:#fff;border-radius:20px;box-shadow:0 8px 30px rgba(0,0,0,.06);padding:20px;margin-top:16px}
-.label{font-size:11px;color:#9aa0a6;font-weight:700;text-transform:uppercase}.pid{font-size:32px;font-weight:900}.badge{background:#facc15;padding:8px 14px;border-radius:999px;font-size:13px;font-weight:800}
-.custName{font-size:22px;font-weight:800;margin-top:8px}.addr{color:#6b7280;margin-top:10px}
-.avatar{width:58px;height:58px;border-radius:999px;background:#111;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800}
-.btnRow{display:flex;gap:12px;margin-top:16px}.btnCall{flex:1;background:#111;color:#fff;border:none;padding:15px;border-radius:14px;font-weight:800}.btnWa{flex:1;background:#22c55e;color:#fff;border:none;padding:15px;border-radius:14px;font-weight:800}
-.tRow{display:flex;gap:14px;margin-top:18px}.dot{width:20px;height:20px;border-radius:999px}.dotFull{background:#facc15}.dotRing{border:2px solid #facc15;background:#fff}.dotGray{border:2px solid #d1d5db;background:#fff}
-.line{width:2px;height:22px;margin-left:9px;background:#e5e7eb}.small{color:#6b7280;font-size:12px}</style></head><body>
-<div class=header><b>Parcel Tracking</b><br><small>🚚 PrimeMove</small></div>
-<div class=wrap><div class=searchCard><input id=q placeholder="PL code"><button onclick="track()">TRACK PARCEL</button></div><div id=out></div></div>
+<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>PrimeMove Tracking</title>
+<style>body{margin:0;font-family:Arial;background:#f2f4f8}.h{background:#111;color:#fff;padding:22px;text-align:center}.w{max-width:460px;margin:0 auto;padding:0 14px 40px}
+.search{background:#fff;margin-top:-12px;padding:20px;border-radius:20px;box-shadow:0 8px 30px rgba(0,0,0,.08)}
+.search input{width:100%;padding:16px;border-radius:14px;border:2px solid #e5e7eb;font-size:17px}
+.search button{width:100%;padding:16px;border-radius:14px;border:none;background:#111;color:#fff;font-weight:800;margin-top:12px;font-size:16px}
+.card{background:#fff;border-radius:20px;padding:20px;margin-top:16px;box-shadow:0 6px 20px rgba(0,0,0,.06)}
+.lb{font-size:11px;color:#9aa3b8;font-weight:700;text-transform:uppercase}.pid{font-size:30px;font-weight:900}
+.badge{background:#facc15;padding:7px 12px;border-radius:999px;font-weight:800;font-size:13px}
+.row{display:flex;justify-content:space-between;align-items:center}
+.av{width:56px;height:56px;border-radius:50%;background:#111;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800}
+.btns{display:flex;gap:12px;margin-top:16px}.b{flex:1;padding:14px;border-radius:14px;border:none;font-weight:800}
+.b1{background:#111;color:#fff}.b2{background:#22c55e;color:#fff}
+.t{margin-top:16px;display:flex;gap:12px}.dot{width:18px;height:18px;border-radius:50%;flex-shrink:0}.full{background:#facc15}.ring{border:2px solid #facc15;background:#fff}.gray{border:2px solid #ddd;background:#fff}
+.line{width:2px;height:20px;background:#e5e7eb;margin-left:8px}</style></head><body>
+<div class=h><b>Track Your Parcel</b><br><small>🚚 PrimeMove • Premium Delivery</small></div>
+<div class=w>
+<div class=search><input id=q placeholder="Enter your PL code e.g. PL999580"><button onclick="track()">TRACK PARCEL</button></div>
+<div id=out></div>
+</div>
 <script>
-let CLOUD_ORDERS=[];
-async function loadCloud(){
- try{
-  let r=await fetch('./orders.json?v='+Date.now());
-  let j=await r.json();
-  CLOUD_ORDERS=j;
-  console.log('Cloud orders loaded', j);
- }catch(e){console.log('Cloud load fail', e)}
-}
-function getAll(){
- let all=[...CLOUD_ORDERS];
- // also scan localStorage for admin added on same phone
- for(let i=0;i<localStorage.length;i++){
-  try{let v=localStorage.getItem(localStorage.key(i)); if(v&&v.includes('PL')){let j=JSON.parse(v); let arr=Array.isArray(j)?j:[j]; arr.forEach(o=>{let id=(o.id||o.parcelId||'').toString().toUpperCase(); if(id.startsWith('PL')) all.push({id, customer:o.customerName||o.customer, addr:o.address||o.addr, driver:o.driverName||o.driver, dphone:o.driverPhone||o.dphone, code:o.driverCode, status:o.status})})}}catch(e){}
- }
- let map={}; all.forEach(o=>{if(o.id) map[o.id.toUpperCase()]=o}); return Object.values(map);
-}
+let ORDERS=[];
+async function load(){try{let r=await fetch('./orders.json?v='+Date.now());ORDERS=await r.json()}catch(e){ORDERS=[
+{id:"PL999580",customer:"Pabi Moloi",addr:"7704 Motanyane Street",driver:"Sphumelele Motaung",dphone:"0828618192",code:"SPHUMELELE1",status:"Assigned"},
+{id:"PL379308",customer:"Customer from Admin - UPDATE ME",addr:"Durban, KZN",driver:"Sphumelele Motaung",dphone:"0828618192",code:"SPHUMELELE1",status:"In Warehouse"}
+]}}
 async function track(){
- await loadCloud();
+ await load();
  let v=document.getElementById('q').value.trim().toUpperCase();
- if(!v){document.getElementById('out').innerHTML='<div class=card>❌ Enter PL code</div>';return}
- let all=getAll(); let o=all.find(x=>x.id.toUpperCase()===v);
- if(!o){document.getElementById('out').innerHTML=`<div class=card>❌ ${v} not found<br><small>Cloud has: ${all.map(a=>a.id).join(', ')}</small></div>`;return}
- let initials=o.driver.split(' ').map(s=>s[0]).join('').slice(0,2).toUpperCase();
+ if(!v){document.getElementById('out').innerHTML='<div class=card>❌ Please enter your PL code</div>';return}
+ let o=ORDERS.find(x=>x.id.toUpperCase()===v);
+ if(!o){document.getElementById('out').innerHTML=`<div class=card>❌ ${v} not found<br><small style="color:#888">Please check your PL code</small></div>`;return}
+ let ini=o.driver.split(' ').map(s=>s[0]).join('').slice(0,2);
  document.getElementById('out').innerHTML=`
-  <div class=card><div class=label>Parcel ID</div><div style="display:flex;justify-content:space-between"><div class=pid>${o.id}</div><div class=badge>${o.status}</div></div></div>
-  <div class=card><div class=label>Customer</div><div class=custName>${o.customer}</div><div class=addr>📍 ${o.addr}</div></div>
-  <div class=card><div class=label>Driver</div><div style="display:flex;gap:14px;margin-top:14px"><div class=avatar>${initials}</div><div><div style="font-weight:800">${o.driver}</div><div style="color:#6b7280">📞 ${o.dphone}</div></div></div><div class=label style="margin-top:16px">Driver Code</div><div style="font-weight:800">${o.code}</div><div class=btnRow><a href="tel:${o.dphone}" style="flex:1"><button class=btnCall>📞 CALL</button></a><a href="https://wa.me/27${o.dphone.slice(-9)}" target="_blank" style="flex:1"><button class=btnWa>WhatsApp</button></a></div></div>
-  <div class=card><div class=label>Tracking Status</div><div class=tRow><div class="dot dotFull"></div><div><b>Parcel Assigned</b><div class=small>${o.status}</div></div></div></div>`;
+ <div class=card><div class=lb>Parcel ID</div><div class=row><div class=pid>${o.id}</div><div class=badge>${o.status}</div></div></div>
+ <div class=card><div class=lb>Customer</div><div style="font-size:20px;font-weight:800;margin-top:6px">${o.customer}</div><div style="color:#6b7280;margin-top:8px">📍 ${o.addr}</div></div>
+ <div class=card><div class=lb>Driver</div><div style="display:flex;gap:12px;margin-top:12px;align-items:center"><div class=av>${ini}</div><div><div style="font-weight:800;font-size:18px">${o.driver}</div><div style="color:#6b7280">📞 ${o.dphone}</div></div></div><div class=lb style="margin-top:14px">Driver Code</div><div style="font-weight:800;margin-top:4px">${o.code}</div><div class=btns><a href="tel:${o.dphone}" style="flex:1"><button class="b b1">📞 CALL</button></a><a href="https://wa.me/27${o.dphone.slice(-9)}" target="_blank" style="flex:1"><button class="b b2">WhatsApp</button></a></div></div>
+ <div class=card><div class=lb>Tracking Status</div>
+  <div class=t><div class="dot full"></div><div><b>${o.status}</b><div style="color:#888;font-size:13px">Updated today</div></div></div><div class=line></div>
+  <div class=t><div class="dot ring"></div><div><b>Out for Delivery</b><div style="color:#888;font-size:13px">Expected today</div></div></div><div class=line></div>
+  <div class=t><div class="dot gray"></div><div><b>Delivered</b><div style="color:#888;font-size:13px">Pending</div></div></div>
+ </div>`;
 }
-loadCloud();
-let p=new URL(location.href).searchParams.get('track'); if(p){document.getElementById('q').value=p; setTimeout(track,800)}
+let p=new URL(location.href).searchParams.get('track'); if(p){document.getElementById('q').value=p; setTimeout(track,700)}
+load();
 </script></body></html>
